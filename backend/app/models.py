@@ -26,7 +26,12 @@ class User(Base):
     vitality = Column(Integer, default=10, nullable=False)
     mind = Column(Integer, default=10, nullable=False)
     
+    # House Induction & Avatar Customization Progress
+    has_completed_induction = Column(Boolean, default=False, nullable=False)
+    avatar_config = Column(Text, nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
     tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")

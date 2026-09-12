@@ -20,6 +20,13 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     Create a new adventurer account and return JWT bearer token with user profile.
     """
+    # Verify password confirmation if provided
+    if user_in.confirm_password and user_in.password != user_in.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match. Please verify your password."
+        )
+
     # Check if username or email already taken
     existing_user = db.query(models.User).filter(
         or_(
@@ -29,15 +36,15 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     ).first()
     
     if existing_user:
-        if existing_user.username == user_in.username:
+        if existing_user.email.lower() == user_in.email.strip().lower():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username is already registered."
+                detail="An adventurer with this email is already registered."
             )
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email is already registered."
+                detail="This hero username is already taken. Please choose another."
             )
 
     # Hash password and initialize starter stats
@@ -47,8 +54,9 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
         email=user_in.email.strip().lower(),
         hashed_password=hashed_pwd,
         selected_theme=user_in.selected_theme or "dark-dungeon",
-        personality_house=user_in.personality_house or "Blossom Leader",
-        character_avatar=user_in.character_avatar or "warrior_girl",
+        personality_house=user_in.personality_house or "",
+        character_avatar=user_in.character_avatar or "emily",
+        has_completed_induction=False,
         level=1,
         xp=0,
         gold=100,
@@ -166,3 +174,38 @@ def update_stats(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.patch("/house", response_model=schemas.UserOut)
+def update_house(
+    house_data: schemas.HouseUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Persist attuned house from the House Induction ceremony to the authenticated user.
+    """
+    current_user.personality_house = house_data.house
+    current_user.has_completed_induction = True
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.patch("/avatar", response_model=schemas.UserOut)
+def update_avatar(
+    avatar_data: schemas.AvatarUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Persist customized avatar configuration from the Avatar Creator to the authenticated user.
+    """
+    import json
+    current_user.avatar_config = json.dumps(avatar_data.avatar_data)
+    if avatar_data.name:
+        current_user.username = avatar_data.name.strip()
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+

@@ -3,14 +3,16 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
+import CharacterOnboardingModal from './components/onboarding/CharacterOnboardingModal';
 import ThemeBackdrop from './components/ThemeBackdrop';
 import Home from './pages/Home';
+import AvatarCreationView from './components/avatar/AvatarCreationView';
 import VirtualWorldView from './components/VirtualWorldView';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'world'
+  const { isAuthenticated, user, isOnboardingModalOpen, closeOnboardingModal, openOnboardingModal } = useAuth();
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'avatar' | 'world'
   const [companionChar, setCompanionChar] = useState(() => {
     try {
       const saved = localStorage.getItem('rpg_companion_char');
@@ -28,12 +30,12 @@ function AppContent() {
     } catch {}
   };
 
-  // When user successfully authenticates or enters as guest, automatically enter the virtual world
+  // When user successfully authenticates with completed induction, automatically enter avatar view
   useEffect(() => {
-    if (isAuthenticated) {
-      setCurrentView('world');
+    if (isAuthenticated && user?.has_completed_induction) {
+      setCurrentView('avatar');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.has_completed_induction]);
 
   return (
     <div className="min-h-screen bg-rpg-bg text-rpg-text transition-colors duration-500 flex flex-col font-sans relative">
@@ -48,10 +50,13 @@ function AppContent() {
         onSelectCompanion={handleSelectCompanion}
       />
 
-      {/* Main Content View (Strict Public Overview vs Post-Auth Virtual World) */}
+      {/* Main Content View (Strict Public Overview vs Avatar Customization Chamber) */}
       <main className="flex-grow">
-        {currentView === 'world' ? (
-          <VirtualWorldView onBackToOverview={() => setCurrentView('home')} />
+        {currentView === 'avatar' || currentView === 'world' ? (
+          <AvatarCreationView 
+            onBackToHome={() => setCurrentView('home')} 
+            onBackToInduction={() => openOnboardingModal()} 
+          />
         ) : (
           <Home 
             companionChar={companionChar}
@@ -62,6 +67,18 @@ function AppContent() {
 
       {/* Login & Character Creation Modal */}
       <AuthModal />
+
+      {/* House Induction & Personality Sorting Ceremony Modal */}
+      <CharacterOnboardingModal
+        isOpen={isOnboardingModalOpen}
+        onClose={() => {
+          closeOnboardingModal();
+          if (!user?.has_completed_induction) {
+            setCurrentView('home');
+          }
+        }}
+        onEnterWorld={() => setCurrentView('avatar')}
+      />
     </div>
   );
 }

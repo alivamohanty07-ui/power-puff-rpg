@@ -35,26 +35,57 @@ export const AuthProvider = ({ children }) => {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('signup'); // 'login' | 'signup'
 
-  // Configure axios authorization header
+  // Configure axios authorization header and verify session with backend
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setIsAuthenticated(true);
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-      setIsAuthenticated(false);
-    }
+    const verifySession = async () => {
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        try {
+          const res = await axios.get('/api/auth/me');
+          if (res.data) {
+            const profile = {
+              ...res.data,
+              maxXp: 100 * (res.data.level || 1)
+            };
+            setUser(profile);
+            setIsAuthenticated(true);
+            localStorage.setItem('power_puff_user', JSON.stringify(profile));
+          }
+        } catch (err) {
+          if (err.response?.status === 401) {
+            // Token expired or invalid
+            setToken(null);
+            localStorage.removeItem('power_puff_token');
+            setIsAuthenticated(false);
+          }
+        }
+      } else {
+        delete axios.defaults.headers.common['Authorization'];
+        setIsAuthenticated(false);
+      }
+    };
+    verifySession();
   }, [token]);
 
   const openAuthModal = (tab = 'signup') => {
-    setAuthModalTab(tab);
+    setAuthModalTab(tab === 'login' ? 'login' : 'signup');
     setIsAuthModalOpen(true);
   };
 
   const closeAuthModal = () => {
     setIsAuthModalOpen(false);
+  };
+
+  const openOnboardingModal = () => {
+    setIsAuthModalOpen(false);
+    setIsOnboardingModalOpen(true);
+  };
+
+  const closeOnboardingModal = () => {
+    setIsOnboardingModalOpen(false);
   };
 
   // Perform API login with graceful fallback
@@ -180,20 +211,70 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Sync house attunement with backend
+  const saveHouseToBackend = async (houseName, houseId, scores = {}) => {
+    if (token) {
+      try {
+        const res = await axios.patch('/api/auth/house', {
+          house: houseName,
+          house_id: houseId,
+          scores: scores
+        });
+        if (res.data) {
+          setUser(prev => ({
+            ...(prev || {}),
+            personality_house: houseName,
+            has_completed_induction: true
+          }));
+        }
+      } catch (err) {
+        console.warn('Backend sync failed, progress persisted locally:', err);
+      }
+    }
+  };
+
+  // Sync avatar customization with backend
+  const saveAvatarToBackend = async (avatarData, characterName) => {
+    if (token) {
+      try {
+        const res = await axios.patch('/api/auth/avatar', {
+          avatar_data: avatarData,
+          name: characterName
+        });
+        if (res.data) {
+          setUser(prev => ({
+            ...(prev || {}),
+            username: characterName || prev.username,
+            avatar_config: JSON.stringify(avatarData)
+          }));
+        }
+      } catch (err) {
+        console.warn('Backend avatar sync failed, progress persisted locally:', err);
+      }
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
+      setUser,
       token,
       isAuthenticated,
+      setIsAuthenticated,
       isAuthModalOpen,
+      isOnboardingModalOpen,
       authModalTab,
       openAuthModal,
       closeAuthModal,
+      openOnboardingModal,
+      closeOnboardingModal,
       login,
       signup,
       logout,
       enterAsGuest,
-      awardRewards
+      awardRewards,
+      saveHouseToBackend,
+      saveAvatarToBackend
     }}>
       {children}
     </AuthContext.Provider>

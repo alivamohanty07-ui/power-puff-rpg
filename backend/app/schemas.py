@@ -10,9 +10,10 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=6)
+    confirm_password: Optional[str] = None
     selected_theme: Optional[str] = "dark-dungeon"
-    personality_house: Optional[str] = "Blossom Leader"
-    character_avatar: Optional[str] = "warrior_girl"
+    personality_house: Optional[str] = ""
+    character_avatar: Optional[str] = "emily"
 
 class UserLogin(BaseModel):
     # Allows logging in with either username or email
@@ -21,6 +22,15 @@ class UserLogin(BaseModel):
 
 class UserThemeUpdate(BaseModel):
     selected_theme: str
+
+class HouseUpdate(BaseModel):
+    house: str
+    house_id: Optional[str] = None
+    scores: Optional[dict] = None
+
+class AvatarUpdate(BaseModel):
+    avatar_data: dict
+    name: Optional[str] = None
 
 class UserStatsUpdate(BaseModel):
     xp_gain: Optional[int] = 0
@@ -37,6 +47,8 @@ class UserOut(UserBase):
     selected_theme: str
     personality_house: str
     character_avatar: str
+    has_completed_induction: bool = False
+    avatar_config: Optional[str] = None
     level: int
     xp: int
     gold: int
@@ -46,6 +58,7 @@ class UserOut(UserBase):
     vitality: int
     mind: int
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

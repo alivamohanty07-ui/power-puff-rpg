@@ -24,6 +24,7 @@ export default {
         }
       },
       fontFamily: {
+        fantasy: ['Cinzel', 'serif'],
         display: ['Orbitron', 'sans-serif'],
         tech: ['Rajdhani', 'sans-serif'],
         pixel: ['"Press Start 2P"', 'cursive'],
