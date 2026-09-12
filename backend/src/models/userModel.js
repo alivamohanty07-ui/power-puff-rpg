@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { db } = require('../config/database');
+const { calculateLevel, getLevelProgress, xpForLevel } = require('../utils/progression');
 
 const BCRYPT_SALT_ROUNDS = 10;
 
@@ -27,6 +28,7 @@ function verifyPassword(plainPassword, hashedPassword) {
 function sanitizeUser(user) {
   if (!user) return null;
   const { password_hash, hashed_password, ...safe } = user;
+  const userXp = user.xp || 0;
   return {
     ...safe,
     name: user.name || user.username,
@@ -38,8 +40,10 @@ function sanitizeUser(user) {
     has_completed_life_builder: Boolean(user.has_completed_life_builder),
     avatar_config: user.avatar_config || null,
     level: user.level || 1,
-    xp: user.xp || 0,
+    level_progress: getLevelProgress(userXp),
+    xp: userXp,
     gold: user.gold || 100,
+    gems: user.gems !== undefined ? user.gems : 25,
     streak: user.streak || 1,
     intellect: user.intellect || 10,
     strength: user.strength || 10,
@@ -301,7 +305,9 @@ function updateStats(userId, updates = {}) {
 
   let newXp = (user.xp || 0) + (updates.xp_gain || 0);
   let newGold = (user.gold || 0) + (updates.gold_gain || 0);
-  let newLevel = updates.level !== undefined ? updates.level : (1 + Math.floor(newXp / 100));
+  let newGems = (user.gems !== undefined ? user.gems : 25) + (updates.gems_gain || 0);
+  if (updates.gems !== undefined) newGems = updates.gems;
+  let newLevel = updates.level !== undefined ? updates.level : calculateLevel(newXp);
   let newStreak = updates.streak !== undefined ? updates.streak : user.streak;
   let newInt = updates.intellect !== undefined ? updates.intellect : user.intellect;
   let newStr = updates.strength !== undefined ? updates.strength : user.strength;
@@ -310,9 +316,9 @@ function updateStats(userId, updates = {}) {
 
   db.prepare(`
     UPDATE users 
-    SET xp = ?, gold = ?, level = ?, streak = ?, intellect = ?, strength = ?, vitality = ?, mind = ?, updated_at = CURRENT_TIMESTAMP
+    SET xp = ?, gold = ?, gems = ?, level = ?, streak = ?, intellect = ?, strength = ?, vitality = ?, mind = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(newXp, newGold, newLevel, newStreak, newInt, newStr, newVit, newMnd, userId);
+  `).run(newXp, newGold, newGems, newLevel, newStreak, newInt, newStr, newVit, newMnd, userId);
 
   return findById(userId);
 }
@@ -333,5 +339,8 @@ module.exports = {
   updateHouse,
   updateAvatar,
   updateTheme,
-  updateStats
+  updateStats,
+  calculateLevel,
+  getLevelProgress,
+  xpForLevel
 };

@@ -9,11 +9,12 @@ import Home from './pages/Home';
 import AvatarCreationView from './components/avatar/AvatarCreationView';
 import VirtualWorldView from './components/VirtualWorldView';
 import LifeBuilderView from './components/life/LifeBuilderView';
+import QuestHallView from './components/quests/QuestHallView';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function AppContent() {
   const { isAuthenticated, user, isOnboardingModalOpen, closeOnboardingModal, openOnboardingModal } = useAuth();
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'avatar' | 'life-builder' | 'world'
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'avatar' | 'life-builder' | 'quest-hall' | 'world'
   const [companionChar, setCompanionChar] = useState(() => {
     try {
       const saved = localStorage.getItem('rpg_companion_char');
@@ -51,12 +52,17 @@ function AppContent() {
         onSelectCompanion={handleSelectCompanion}
       />
 
-      {/* Main Content View (Overview vs Avatar vs Life Builder vs World Hub) */}
+      {/* Main Content View (Overview vs Avatar vs Life Builder vs Quest Hall vs World Hub) */}
       <main className="flex-grow">
-        {currentView === 'life-builder' ? (
+        {currentView === 'quest-hall' ? (
+          <QuestHallView 
+            onBackToHome={() => setCurrentView('home')} 
+            onExploreWorld={() => setCurrentView('world')} 
+          />
+        ) : currentView === 'life-builder' ? (
           <LifeBuilderView 
             onBackToHome={() => setCurrentView('home')} 
-            onCompleteLifeBuilder={() => setCurrentView('world')} 
+            onCompleteLifeBuilder={() => setCurrentView('quest-hall')} 
           />
         ) : currentView === 'avatar' ? (
           <AvatarCreationView 

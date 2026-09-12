@@ -232,6 +232,20 @@ export default function Navbar({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => setCurrentView && setCurrentView(currentView === 'quest-hall' ? 'home' : 'quest-hall')}
+                className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-tech font-bold tracking-wider uppercase transition-colors ${
+                  currentView === 'quest-hall'
+                    ? 'bg-purple-500/20 border-purple-400 text-purple-300 shadow-theme-glow'
+                    : 'bg-rpg-card border-rpg-border hover:border-purple-400 text-purple-300/90'
+                }`}
+              >
+                <Sword className="w-3.5 h-3.5 text-purple-400" />
+                <span>Quest Hall</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setCurrentView && setCurrentView(currentView === 'life-builder' ? 'home' : 'life-builder')}
                 className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-tech font-bold tracking-wider uppercase transition-colors ${
                   currentView === 'life-builder'
@@ -284,10 +298,19 @@ export default function Navbar({
                       </div>
                       <button
                         onClick={() => {
+                          if (setCurrentView) setCurrentView('quest-hall');
+                          setProfileDropdownOpen(false);
+                        }}
+                        className="w-full mt-1.5 flex items-center gap-2 px-3 py-2 text-xs font-tech font-bold uppercase tracking-wider text-purple-300 hover:bg-purple-500/10 rounded-xl transition-colors"
+                      >
+                        <Sword className="w-3.5 h-3.5 text-purple-400" /> Quest Hall
+                      </button>
+                      <button
+                        onClick={() => {
                           if (setCurrentView) setCurrentView('life-builder');
                           setProfileDropdownOpen(false);
                         }}
-                        className="w-full mt-1.5 flex items-center gap-2 px-3 py-2 text-xs font-tech font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-500/10 rounded-xl transition-colors"
+                        className="w-full mt-1 flex items-center gap-2 px-3 py-2 text-xs font-tech font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-500/10 rounded-xl transition-colors"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Build Your Life
                       </button>

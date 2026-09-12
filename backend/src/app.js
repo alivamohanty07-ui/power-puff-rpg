@@ -64,6 +64,17 @@ app.use('/api/auth', authRoutes);
 const lifeProfileRoutes = require('./routes/lifeProfileRoutes');
 app.use('/api/life-profile', authMiddleware, lifeProfileRoutes);
 
+// Quests routes (Phase 5A & 5B: Quest Hall & Focus Timer)
+const questRoutes = require('./routes/questRoutes');
+const questController = require('./controllers/questController');
+app.use('/api/quests', authMiddleware, questRoutes);
+
+// Daily Challenge routes (/api/daily-challenge)
+app.get('/api/daily-challenge/today', authMiddleware, questController.getDailyChallenge);
+app.get('/api/daily-challenge', authMiddleware, questController.getDailyChallenge);
+app.post('/api/daily-challenge/:id/accept', authMiddleware, questController.acceptDailyChallenge);
+app.post('/api/daily-challenge/:id/complete', authMiddleware, questController.completeDailyChallenge);
+
 // User-scoped endpoints (/api/users/me/house)
 app.post('/api/users/me/house', authMiddleware, authController.saveHouse);
 app.get('/api/users/me/house', authMiddleware, authController.getHouse);
