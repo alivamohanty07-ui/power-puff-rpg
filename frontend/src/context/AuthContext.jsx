@@ -224,26 +224,52 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Sync house attunement with backend
+  // Sync house attunement with backend (POST /api/users/me/house)
   const saveHouseToBackend = async (houseName, houseId, scores = {}) => {
     if (token) {
       try {
-        const res = await axios.patch('/api/auth/house', {
-          house: houseName,
-          house_id: houseId,
+        const res = await axios.post('/api/users/me/house', {
+          houseId: houseId,
+          houseName: houseName,
           scores: scores
         });
         if (res.data) {
-          setUser(prev => ({
-            ...(prev || {}),
-            personality_house: houseName,
-            has_completed_induction: true
-          }));
+          const canonicalName = res.data.houseName || houseName;
+          setUser(prev => {
+            const updated = {
+              ...(prev || {}),
+              personality_house: canonicalName,
+              house: canonicalName,
+              houseId: res.data.houseId || houseId,
+              has_completed_induction: true
+            };
+            try {
+              localStorage.setItem('power_puff_user', JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+          return { success: true, data: res.data };
         }
       } catch (err) {
-        console.warn('Backend sync failed, progress persisted locally:', err);
+        const errorMsg = err.response?.data?.detail || err.message || 'Your house could not be recorded. Please try again.';
+        console.error('Backend house save error:', errorMsg);
+        return { success: false, error: errorMsg };
       }
     }
+    return { success: true };
+  };
+
+  // Retrieve saved house selection from backend (GET /api/users/me/house)
+  const getSavedHouseFromBackend = async () => {
+    if (token) {
+      try {
+        const res = await axios.get('/api/users/me/house');
+        return res.data;
+      } catch (err) {
+        console.warn('Failed to fetch house selection:', err);
+      }
+    }
+    return { completed: false, houseId: null };
   };
 
   // Sync avatar customization with backend
@@ -287,6 +313,7 @@ export const AuthProvider = ({ children }) => {
       enterAsGuest,
       awardRewards,
       saveHouseToBackend,
+      getSavedHouseFromBackend,
       saveAvatarToBackend
     }}>
       {children}

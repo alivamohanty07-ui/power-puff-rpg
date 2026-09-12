@@ -21,6 +21,8 @@ export default function CharacterOnboardingModal({ isOpen, onClose, onEnterWorld
   const [answers, setAnswers] = useState({});
   const [winningHouse, setWinningHouse] = useState(HOUSES.blossom);
   const [scores, setScores] = useState({ blossom: 0, bubbles: 0, buttercup: 0 });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   // Reset state whenever modal is opened
   useEffect(() => {
@@ -28,6 +30,8 @@ export default function CharacterOnboardingModal({ isOpen, onClose, onEnterWorld
       setStep('intro');
       setAnswers({});
       setWinningHouse(HOUSES.blossom);
+      setIsSaving(false);
+      setSaveError(null);
     }
   }, [isOpen]);
 
@@ -53,6 +57,7 @@ export default function CharacterOnboardingModal({ isOpen, onClose, onEnterWorld
     const result = calculateHouseAlignment(finalAnswers);
     setWinningHouse(result.winningHouse);
     setScores(result.scores);
+    setSaveError(null);
     setStep('calculation');
   };
 
@@ -62,14 +67,28 @@ export default function CharacterOnboardingModal({ isOpen, onClose, onEnterWorld
 
   const handleRetake = () => {
     setAnswers({});
+    setSaveError(null);
     setStep('trial');
   };
 
   const handleConfirmHouse = async () => {
-    // 1. Persist to localStorage powerpuff_rpg_character & power_puff_user
-    const updatedCharacter = persistHouseInduction(winningHouse, scores);
+    setIsSaving(true);
+    setSaveError(null);
 
-    // 2. Sync to AuthContext user state if user is logged in or guest
+    // 1. Sync to backend if authenticated
+    if (saveHouseToBackend && user?.id !== 0) {
+      const result = await saveHouseToBackend(winningHouse.name, winningHouse.id, scores);
+      if (result && !result.success) {
+        setIsSaving(false);
+        setSaveError(result.error || "Your house could not be recorded. Please try again.");
+        return;
+      }
+    }
+
+    // 2. Persist to localStorage powerpuff_rpg_character & power_puff_user
+    persistHouseInduction(winningHouse, scores);
+
+    // 3. Sync to AuthContext user state if user is logged in or guest
     if (setUser) {
       setUser((prev) => ({
         ...(prev || {}),
@@ -79,20 +98,12 @@ export default function CharacterOnboardingModal({ isOpen, onClose, onEnterWorld
       }));
     }
 
-    // 3. Sync to backend if authenticated
-    if (saveHouseToBackend) {
-      try {
-        await saveHouseToBackend(winningHouse.name, winningHouse.id, scores);
-      } catch (err) {
-        console.warn('Backend house sync failed or offline:', err);
-      }
-    }
-
     // 4. Sync theme if applicable
     if (setTheme && winningHouse.themeId) {
       setTheme(winningHouse.themeId);
     }
 
+    setIsSaving(false);
     // Advance to clean next-step transition
     setStep('next_step');
   };
@@ -167,6 +178,8 @@ export default function CharacterOnboardingModal({ isOpen, onClose, onEnterWorld
               house={winningHouse} 
               onConfirm={handleConfirmHouse} 
               onRetake={handleRetake} 
+              isSaving={isSaving}
+              saveError={saveError}
             />
           )}
 

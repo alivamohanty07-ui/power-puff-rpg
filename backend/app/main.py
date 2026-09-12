@@ -1,10 +1,10 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import engine, Base
-from app import models
+from app import models, schemas
 from app.routers import auth
 
 @asynccontextmanager
@@ -31,6 +31,18 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth.router, prefix=settings.API_V1_STR)
+
+@app.post("/api/users/me/house", response_model=schemas.UserOut, tags=["House"])
+def users_me_save_house(
+    house_data: schemas.HouseUpdate,
+    db=Depends(auth.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    return auth.update_house(house_data=house_data, db=db, current_user=current_user)
+
+@app.get("/api/users/me/house", response_model=schemas.HouseResponse, tags=["House"])
+def users_me_get_house(current_user: models.User = Depends(auth.get_current_user)):
+    return auth.get_house(current_user=current_user)
 
 @app.get("/api/health", tags=["Health"])
 def health_check():

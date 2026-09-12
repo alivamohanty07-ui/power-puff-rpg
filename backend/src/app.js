@@ -54,8 +54,20 @@ app.get('/', (req, res) => {
   });
 });
 
-// Mount routes
+const authMiddleware = require('./middleware/authMiddleware');
+const authController = require('./controllers/authController');
+
+// Mount auth routes
 app.use('/api/auth', authRoutes);
+
+// Life Profile routes (Phase 4: Build Your Life)
+const lifeProfileRoutes = require('./routes/lifeProfileRoutes');
+app.use('/api/life-profile', authMiddleware, lifeProfileRoutes);
+
+// User-scoped endpoints (/api/users/me/house)
+app.post('/api/users/me/house', authMiddleware, authController.saveHouse);
+app.get('/api/users/me/house', authMiddleware, authController.getHouse);
+app.get('/api/users/me', authMiddleware, authController.getMe);
 
 // 404 Handler for undefined API routes
 app.use('/api/*', (req, res) => {

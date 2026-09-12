@@ -177,21 +177,90 @@ async function runTests() {
     assert.strictEqual(badTokenRes.status, 401, 'Invalid token must return 401');
     console.log('✓ Invalid token rejection (401) passed');
 
-    // 14. House Attunement Sync: PATCH /api/auth/house
-    const houseRes = await fetch(`${BASE_URL}/api/auth/house`, {
-      method: 'PATCH',
+    // 14. Phase 2: Check House Status Before Selection: GET /api/users/me/house
+    const preHouseRes = await fetch(`${BASE_URL}/api/users/me/house`, { headers: authHeaders });
+    assert.strictEqual(preHouseRes.status, 200, 'GET /api/users/me/house must return 200');
+    const preHouseData = await preHouseRes.json();
+    assert.strictEqual(preHouseData.completed, false);
+    assert.strictEqual(preHouseData.houseId, null);
+    console.log('✓ Initial GET /api/users/me/house returned completed: false');
+
+    // 15. Phase 2: Reject Invalid House Identifier (e.g. 'gryffindor')
+    const invalidHouseRes = await fetch(`${BASE_URL}/api/users/me/house`, {
+      method: 'POST',
       headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ houseId: 'gryffindor' })
+    });
+    assert.strictEqual(invalidHouseRes.status, 400, 'Invalid house ID must be rejected with 400');
+    console.log('✓ Invalid house ID rejection (400) passed');
+
+    // 16. Phase 2: Reject Unauthenticated House Selection
+    const unauthHouseRes = await fetch(`${BASE_URL}/api/users/me/house`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ houseId: 'blossom' })
+    });
+    assert.strictEqual(unauthHouseRes.status, 401, 'Unauthenticated house save must return 401');
+    console.log('✓ Unauthenticated house save rejection (401) passed');
+
+    // 17. Phase 2: Save House Selection via POST /api/users/me/house
+    const saveHouseRes = await fetch(`${BASE_URL}/api/users/me/house`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ houseId: 'blossom' })
+    });
+    assert.strictEqual(saveHouseRes.status, 200, 'POST /api/users/me/house must return 200');
+    const saveHouseData = await saveHouseRes.json();
+    assert.strictEqual(saveHouseData.houseId, 'blossom');
+    assert.strictEqual(saveHouseData.houseName, 'House Blossom');
+    assert.strictEqual(saveHouseData.hasCompletedInduction, true);
+    assert(saveHouseData.selectedAt, 'Must include selectedAt timestamp');
+    console.log('✓ POST /api/users/me/house passed (blossom saved, hasCompletedInduction: true)');
+
+    // 18. Phase 2: Retrieve Saved House via GET /api/users/me/house
+    const getHouseRes = await fetch(`${BASE_URL}/api/users/me/house`, { headers: authHeaders });
+    assert.strictEqual(getHouseRes.status, 200);
+    const getHouseData = await getHouseRes.json();
+    assert.strictEqual(getHouseData.completed, true);
+    assert.strictEqual(getHouseData.houseId, 'blossom');
+    assert.strictEqual(getHouseData.houseName, 'House Blossom');
+    console.log('✓ GET /api/users/me/house retrieved saved house (House Blossom)');
+
+    // 19. Phase 2: Multi-User Isolation (User B cannot see or overwrite User A's house)
+    const bTimestamp = Date.now();
+    const userBEmail = `hero_b_${bTimestamp}@academy.rpg`;
+    const userBRes = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        house: 'House Blossom',
-        house_id: 'blossom',
-        scores: { blossom: 5, bubbles: 2, buttercup: 1 }
+        name: `HeroBeta_${bTimestamp}`,
+        email: userBEmail,
+        password: testPassword
       })
     });
-    assert.strictEqual(houseRes.status, 200, 'PATCH /api/auth/house must return 200');
-    const houseData = await houseRes.json();
-    assert.strictEqual(houseData.personality_house, 'House Blossom');
-    assert.strictEqual(houseData.has_completed_induction, true);
-    console.log('✓ House induction sync passed (personality_house: House Blossom, has_completed_induction: true)');
+    assert.strictEqual(userBRes.status, 201, 'User B registration must return 201');
+    const userBData = await userBRes.json();
+    const userBHeaders = { 'Authorization': `Bearer ${userBData.access_token}` };
+
+    // User B initially has completed: false
+    const userBHouseRes = await fetch(`${BASE_URL}/api/users/me/house`, { headers: userBHeaders });
+    const userBHouseData = await userBHouseRes.json();
+    assert.strictEqual(userBHouseData.completed, false);
+
+    // Save User B house to 'bubbles'
+    const saveUserBRes = await fetch(`${BASE_URL}/api/users/me/house`, {
+      method: 'POST',
+      headers: { ...userBHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ houseId: 'bubbles' })
+    });
+    const saveUserBData = await saveUserBRes.json();
+    assert.strictEqual(saveUserBData.houseId, 'bubbles');
+
+    // Verify User A is STILL 'blossom'
+    const checkUserARes = await fetch(`${BASE_URL}/api/users/me/house`, { headers: authHeaders });
+    const checkUserAData = await checkUserARes.json();
+    assert.strictEqual(checkUserAData.houseId, 'blossom');
+    console.log('✓ Multi-user house isolation passed (User A = Blossom, User B = Bubbles)');
 
     // 15. Avatar Customization Sync: PATCH /api/auth/avatar
     const avatarConfig = {

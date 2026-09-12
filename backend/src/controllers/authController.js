@@ -162,17 +162,43 @@ exports.logout = (req, res) => {
 };
 
 /**
- * Persist House Attunement
- * PATCH /api/auth/house
+ * Persist House Selection
+ * POST /api/users/me/house, POST /api/auth/house, PATCH /api/auth/house
  */
-exports.updateHouse = (req, res) => {
-  const houseName = req.body.house || req.body.personality_house;
-  if (!houseName) {
-    return res.status(400).json({ detail: 'House name is required.' });
+exports.saveHouse = (req, res) => {
+  const houseInput = req.body.houseId || req.body.house_id || req.body.house || req.body.personality_house;
+  if (!houseInput) {
+    return res.status(400).json({
+      detail: 'House identifier is required (e.g. blossom, bubbles, or buttercup).'
+    });
   }
 
-  const updated = userModel.updateHouse(req.user.id, houseName);
-  return res.json(userModel.sanitizeUser(updated));
+  try {
+    const result = userModel.saveUserHouse(req.user.id, houseInput);
+    return res.json({
+      houseId: result.houseId,
+      houseName: result.houseName,
+      selectedAt: result.selectedAt,
+      hasCompletedInduction: true,
+      user: result.user
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({
+      detail: err.message || 'Failed to save house selection.'
+    });
+  }
+};
+
+// Backward-compatible alias
+exports.updateHouse = exports.saveHouse;
+
+/**
+ * Retrieve Saved House Selection
+ * GET /api/users/me/house, GET /api/auth/house
+ */
+exports.getHouse = (req, res) => {
+  const houseInfo = userModel.getUserHouse(req.user.id);
+  return res.json(houseInfo);
 };
 
 /**

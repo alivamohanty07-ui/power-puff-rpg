@@ -32,7 +32,8 @@ import AccessoriesPanel from './AccessoriesPanel';
 
 export default function AvatarCreationView({
   onBackToHome,
-  onBackToInduction
+  onBackToInduction,
+  onProceedToLifeBuilder
 }) {
   const { user, setUser, saveAvatarToBackend } = useAuth();
   const { currentTheme } = useTheme();
@@ -470,12 +471,16 @@ export default function AvatarCreationView({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   setShowCompleteModal(false);
-                  if (onBackToHome) onBackToHome();
+                  if (onProceedToLifeBuilder) {
+                    onProceedToLifeBuilder();
+                  } else if (onBackToHome) {
+                    onBackToHome();
+                  }
                 }}
                 className="mt-7 w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-fantasy font-bold text-xs sm:text-sm tracking-[0.2em] uppercase shadow-[0_0_30px_rgba(245,158,11,0.45)] hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Compass className="w-4 h-4" />
-                <span>RETURN TO REALM OVERVIEW</span>
+                <Sparkles className="w-4 h-4" />
+                <span>BUILD YOUR LIFE →</span>
               </motion.button>
             </motion.div>
           </div>

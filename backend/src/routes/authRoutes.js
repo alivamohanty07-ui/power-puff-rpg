@@ -11,7 +11,9 @@ router.post('/logout', authController.logout);
 
 // Protected endpoints
 router.get('/me', authMiddleware, authController.getMe);
-router.patch('/house', authMiddleware, authController.updateHouse);
+router.post('/house', authMiddleware, authController.saveHouse);
+router.patch('/house', authMiddleware, authController.saveHouse);
+router.get('/house', authMiddleware, authController.getHouse);
 router.patch('/avatar', authMiddleware, authController.updateAvatar);
 router.patch('/theme', authMiddleware, authController.updateTheme);
 router.patch('/stats', authMiddleware, authController.updateStats);

@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti';
 import { Sparkles, ArrowRight, RotateCcw, Shield, CheckCircle2 } from 'lucide-react';
 import { triggerGameFX } from '../GameFX';
 
-export default function HouseReveal({ house, onConfirm, onRetake }) {
+export default function HouseReveal({ house, onConfirm, onRetake, isSaving = false, saveError = null }) {
   useEffect(() => {
     // Grand celebration particle burst matching house colors
     const colors = house.atmosphere.palette;
@@ -127,26 +127,35 @@ export default function HouseReveal({ house, onConfirm, onRetake }) {
         </div>
       </motion.div>
 
+      {/* Error Notice */}
+      {saveError && (
+        <div className="w-full max-w-md p-3 mb-2 rounded-2xl bg-rose-950/70 border border-rose-500/60 text-rose-300 text-xs font-sans flex items-center justify-center gap-2">
+          <span>⚠️ {saveError}</span>
+        </div>
+      )}
+
       {/* Action Buttons: ACCEPT vs RETAKE */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.35 }}
-        className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md pt-4"
+        className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md pt-2"
       >
         <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: isSaving ? 1 : 1.03 }}
+          whileTap={{ scale: isSaving ? 1 : 0.97 }}
           onClick={onConfirm}
-          className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-fantasy font-black text-xs sm:text-sm tracking-[0.2em] uppercase shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          disabled={isSaving}
+          className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-fantasy font-black text-xs sm:text-sm tracking-[0.2em] uppercase shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
         >
-          <Sparkles className="w-4 h-4" />
-          <span>ACCEPT MY HOUSE →</span>
+          <Sparkles className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} />
+          <span>{isSaving ? 'RECORDING TO REALM...' : 'ACCEPT MY HOUSE →'}</span>
         </motion.button>
 
         <button
           onClick={onRetake}
-          className="w-full sm:w-auto py-3 px-5 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 font-sans text-xs tracking-wider uppercase transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+          disabled={isSaving}
+          className="w-full sm:w-auto py-3 px-5 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 font-sans text-xs tracking-wider uppercase transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>RETAKE INDUCTION</span>

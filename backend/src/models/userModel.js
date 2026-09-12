@@ -32,8 +32,10 @@ function sanitizeUser(user) {
     name: user.name || user.username,
     username: user.username || user.name,
     personality_house: user.personality_house || '',
+    house: user.personality_house || '',
     character_avatar: user.character_avatar || 'emily',
     has_completed_induction: Boolean(user.has_completed_induction),
+    has_completed_life_builder: Boolean(user.has_completed_life_builder),
     avatar_config: user.avatar_config || null,
     level: user.level || 1,
     xp: user.xp || 0,
@@ -140,17 +142,117 @@ function createUser({
   return findById(result.lastInsertRowid);
 }
 
+const CANONICAL_HOUSES = {
+  blossom: 'House Blossom',
+  bubbles: 'House Bubbles',
+  buttercup: 'House Buttercup'
+};
+
 /**
- * Persist House Induction result
+ * Validate and normalize house identifier or name
+ * Returns { houseId, houseName } or null if invalid
  */
-function updateHouse(userId, houseName) {
+function normalizeHouse(input) {
+  if (!input || typeof input !== 'string') return null;
+  const clean = input.trim().toLowerCase().replace(/^house\s+/, '');
+  if (CANONICAL_HOUSES[clean]) {
+    return {
+      houseId: clean,
+      houseName: CANONICAL_HOUSES[clean]
+    };
+  }
+  return null;
+}
+
+/**
+ * Persist House Selection into user_houses relational table and sync user profile
+ */
+function saveUserHouse(userId, houseInput) {
+  const normalized = normalizeHouse(houseInput);
+  if (!normalized) {
+    const error = new Error('Invalid house. Valid houses are blossom, bubbles, or buttercup.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const { houseId, houseName } = normalized;
+
+  // Insert or update in user_houses relational table
+  db.prepare(`
+    INSERT INTO user_houses (user_id, house_id, house_name, selected_at)
+    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(user_id) DO UPDATE SET
+      house_id = excluded.house_id,
+      house_name = excluded.house_name,
+      selected_at = CURRENT_TIMESTAMP
+  `).run(userId, houseId, houseName);
+
+  // Synchronize users profile
   db.prepare(`
     UPDATE users 
     SET personality_house = ?, has_completed_induction = 1, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `).run(houseName, userId);
 
-  return findById(userId);
+  const selection = db.prepare('SELECT * FROM user_houses WHERE user_id = ?').get(userId);
+  const user = findById(userId);
+
+  return {
+    houseId: selection.house_id,
+    houseName: selection.house_name,
+    selectedAt: selection.selected_at,
+    hasCompletedInduction: true,
+    user: sanitizeUser(user)
+  };
+}
+
+/**
+ * Retrieve saved house for a user from user_houses table (or users fallback)
+ */
+function getUserHouse(userId) {
+  const selection = db.prepare('SELECT * FROM user_houses WHERE user_id = ?').get(userId);
+  if (selection) {
+    return {
+      completed: true,
+      houseId: selection.house_id,
+      houseName: selection.house_name,
+      selectedAt: selection.selected_at
+    };
+  }
+
+  // Check users table fallback for backward compatibility
+  const user = findById(userId);
+  if (user && user.has_completed_induction && user.personality_house) {
+    const normalized = normalizeHouse(user.personality_house);
+    if (normalized) {
+      db.prepare(`
+        INSERT OR IGNORE INTO user_houses (user_id, house_id, house_name, selected_at)
+        VALUES (?, ?, ?, ?)
+      `).run(userId, normalized.houseId, normalized.houseName, user.updated_at || user.created_at);
+
+      return {
+        completed: true,
+        houseId: normalized.houseId,
+        houseName: normalized.houseName,
+        selectedAt: user.updated_at || user.created_at
+      };
+    }
+  }
+
+  return {
+    completed: false,
+    houseId: null,
+    houseName: null,
+    selectedAt: null
+  };
+}
+
+/**
+ * Persist House Induction result (legacy alias)
+ */
+function updateHouse(userId, houseName) {
+  const result = saveUserHouse(userId, houseName);
+  return result.user;
 }
 
 /**
@@ -163,9 +265,9 @@ function updateAvatar(userId, avatarData, characterName) {
     const cleanName = characterName.trim();
     db.prepare(`
       UPDATE users 
-      SET avatar_config = ?, name = ?, username = ?, updated_at = CURRENT_TIMESTAMP
+      SET avatar_config = ?, name = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(avatarJson, cleanName, cleanName, userId);
+    `).run(avatarJson, cleanName, userId);
   } else {
     db.prepare(`
       UPDATE users 
@@ -216,6 +318,8 @@ function updateStats(userId, updates = {}) {
 }
 
 module.exports = {
+  CANONICAL_HOUSES,
+  normalizeHouse,
   hashPassword,
   verifyPassword,
   sanitizeUser,
@@ -224,6 +328,8 @@ module.exports = {
   findByUsername,
   findByIdentifier,
   createUser,
+  saveUserHouse,
+  getUserHouse,
   updateHouse,
   updateAvatar,
   updateTheme,

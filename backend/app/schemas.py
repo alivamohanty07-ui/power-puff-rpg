@@ -26,9 +26,17 @@ class UserThemeUpdate(BaseModel):
     selected_theme: str
 
 class HouseUpdate(BaseModel):
-    house: str
+    house: Optional[str] = None
     house_id: Optional[str] = None
+    houseId: Optional[str] = None
+    houseName: Optional[str] = None
     scores: Optional[dict] = None
+
+class HouseResponse(BaseModel):
+    completed: bool
+    houseId: Optional[str] = None
+    houseName: Optional[str] = None
+    selectedAt: Optional[datetime] = None
 
 class AvatarUpdate(BaseModel):
     avatar_data: dict

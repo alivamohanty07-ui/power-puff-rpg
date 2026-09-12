@@ -5,6 +5,7 @@
   "description": "Gamified RPG Productivity Web App",
   "scripts": {
     "dev": "npm --prefix frontend run dev",
+    "client": "npm --prefix frontend run dev",
     "server": "npm --prefix backend run server",
     "test": "npm --prefix backend test"
   }

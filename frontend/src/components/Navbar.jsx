@@ -232,6 +232,20 @@ export default function Navbar({
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => setCurrentView && setCurrentView(currentView === 'life-builder' ? 'home' : 'life-builder')}
+                className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-tech font-bold tracking-wider uppercase transition-colors ${
+                  currentView === 'life-builder'
+                    ? 'bg-amber-400/20 border-amber-400 text-amber-300 shadow-theme-glow'
+                    : 'bg-rpg-card border-rpg-border hover:border-amber-400 text-amber-300/90'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Life Builder</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setCurrentView && setCurrentView(currentView === 'world' ? 'home' : 'world')}
                 className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rpg-card border border-rpg-border hover:border-rpg-accent text-xs font-tech font-bold tracking-wider uppercase text-rpg-text"
               >
@@ -270,10 +284,19 @@ export default function Navbar({
                       </div>
                       <button
                         onClick={() => {
+                          if (setCurrentView) setCurrentView('life-builder');
+                          setProfileDropdownOpen(false);
+                        }}
+                        className="w-full mt-1.5 flex items-center gap-2 px-3 py-2 text-xs font-tech font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-500/10 rounded-xl transition-colors"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Build Your Life
+                      </button>
+                      <button
+                        onClick={() => {
                           if (setCurrentView) setCurrentView('world');
                           setProfileDropdownOpen(false);
                         }}
-                        className="w-full mt-1.5 flex items-center gap-2 px-3 py-2 text-xs font-tech font-bold uppercase tracking-wider text-rpg-text hover:bg-rpg-bg rounded-xl transition-colors"
+                        className="w-full mt-1 flex items-center gap-2 px-3 py-2 text-xs font-tech font-bold uppercase tracking-wider text-rpg-text hover:bg-rpg-bg rounded-xl transition-colors"
                       >
                         <Compass className="w-3.5 h-3.5 text-rpg-accent" /> Virtual World Hub
                       </button>

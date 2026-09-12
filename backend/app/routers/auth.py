@@ -193,6 +193,13 @@ def update_stats(
     return current_user
 
 
+CANONICAL_HOUSES = {
+    "blossom": "House Blossom",
+    "bubbles": "House Bubbles",
+    "buttercup": "House Buttercup"
+}
+
+@router.post("/house", response_model=schemas.UserOut)
 @router.patch("/house", response_model=schemas.UserOut)
 def update_house(
     house_data: schemas.HouseUpdate,
@@ -202,11 +209,48 @@ def update_house(
     """
     Persist attuned house from the House Induction ceremony to the authenticated user.
     """
-    current_user.personality_house = house_data.house
+    raw_house = house_data.houseId or house_data.house_id or house_data.house or house_data.houseName
+    if not raw_house:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="House identifier is required."
+        )
+
+    clean_id = raw_house.strip().lower().replace("house ", "").strip()
+    if clean_id not in CANONICAL_HOUSES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid house. Valid houses are blossom, bubbles, or buttercup."
+        )
+
+    canonical_name = CANONICAL_HOUSES[clean_id]
+    current_user.personality_house = canonical_name
     current_user.has_completed_induction = True
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.get("/house", response_model=schemas.HouseResponse)
+def get_house(current_user: models.User = Depends(get_current_user)):
+    """
+    Retrieve saved house for the currently authenticated user.
+    """
+    if current_user.has_completed_induction and current_user.personality_house:
+        clean_id = current_user.personality_house.strip().lower().replace("house ", "").strip()
+        canonical_name = CANONICAL_HOUSES.get(clean_id, current_user.personality_house)
+        return {
+            "completed": True,
+            "houseId": clean_id,
+            "houseName": canonical_name,
+            "selectedAt": current_user.updated_at or current_user.created_at
+        }
+    return {
+        "completed": False,
+        "houseId": None,
+        "houseName": None,
+        "selectedAt": None
+    }
 
 
 @router.patch("/avatar", response_model=schemas.UserOut)

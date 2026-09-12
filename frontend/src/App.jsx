@@ -8,11 +8,12 @@ import ThemeBackdrop from './components/ThemeBackdrop';
 import Home from './pages/Home';
 import AvatarCreationView from './components/avatar/AvatarCreationView';
 import VirtualWorldView from './components/VirtualWorldView';
+import LifeBuilderView from './components/life/LifeBuilderView';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function AppContent() {
   const { isAuthenticated, user, isOnboardingModalOpen, closeOnboardingModal, openOnboardingModal } = useAuth();
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'avatar' | 'world'
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'avatar' | 'life-builder' | 'world'
   const [companionChar, setCompanionChar] = useState(() => {
     try {
       const saved = localStorage.getItem('rpg_companion_char');
@@ -32,7 +33,7 @@ function AppContent() {
 
   // When user successfully authenticates with completed induction, automatically enter avatar view
   useEffect(() => {
-    if (isAuthenticated && user?.has_completed_induction) {
+    if (isAuthenticated && user?.has_completed_induction && currentView === 'home') {
       setCurrentView('avatar');
     }
   }, [isAuthenticated, user?.has_completed_induction]);
@@ -50,12 +51,22 @@ function AppContent() {
         onSelectCompanion={handleSelectCompanion}
       />
 
-      {/* Main Content View (Strict Public Overview vs Avatar Customization Chamber) */}
+      {/* Main Content View (Overview vs Avatar vs Life Builder vs World Hub) */}
       <main className="flex-grow">
-        {currentView === 'avatar' || currentView === 'world' ? (
+        {currentView === 'life-builder' ? (
+          <LifeBuilderView 
+            onBackToHome={() => setCurrentView('home')} 
+            onCompleteLifeBuilder={() => setCurrentView('world')} 
+          />
+        ) : currentView === 'avatar' ? (
           <AvatarCreationView 
             onBackToHome={() => setCurrentView('home')} 
             onBackToInduction={() => openOnboardingModal()} 
+            onProceedToLifeBuilder={() => setCurrentView('life-builder')}
+          />
+        ) : currentView === 'world' ? (
+          <VirtualWorldView 
+            onBackToOverview={() => setCurrentView('home')} 
           />
         ) : (
           <Home 

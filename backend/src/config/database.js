@@ -47,14 +47,93 @@ function initDatabase() {
   db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);`);
   db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);`);
 
-  // 2. Migration: Ensure 'name' and 'password_hash' columns exist if table was previously created without them
+  // 2. Create user_houses relational table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_houses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE,
+      house_id VARCHAR(50) NOT NULL,
+      house_name VARCHAR(100) NOT NULL,
+      selected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_user_houses_user_id ON user_houses(user_id);`);
+
+  // 3. Create life_profiles table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS life_profiles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE,
+      path_type VARCHAR(50) NOT NULL DEFAULT '',
+      custom_path TEXT DEFAULT NULL,
+      education_data TEXT DEFAULT NULL,
+      completed_step INTEGER DEFAULT 0,
+      is_completed BOOLEAN DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_life_profiles_user_id ON life_profiles(user_id);`);
+
+  // 4. Create user_subjects table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_subjects (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      subject_name VARCHAR(150) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_user_subjects_user_id ON user_subjects(user_id);`);
+
+  // 5. Create user_interests table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_interests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      activity_name VARCHAR(150) NOT NULL,
+      category VARCHAR(100) NOT NULL,
+      frequency VARCHAR(50) DEFAULT 'several_times_a_week',
+      approximate_duration VARCHAR(50) DEFAULT '1_hour',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_user_interests_user_id ON user_interests(user_id);`);
+
+  // 6. Create user_schedules table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      activity_name VARCHAR(150) NOT NULL,
+      category VARCHAR(50) NOT NULL DEFAULT 'other',
+      start_time VARCHAR(10) NOT NULL,
+      end_time VARCHAR(10) NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_user_schedules_user_id ON user_schedules(user_id);`);
+
+  // 7. Migrations: Ensure columns exist if tables were created previously
   try {
-    const columns = db.prepare('PRAGMA table_info(users);').all().map(c => c.name);
-    if (!columns.includes('name')) {
+    const userColumns = db.prepare('PRAGMA table_info(users);').all().map(c => c.name);
+    if (!userColumns.includes('name')) {
       db.exec('ALTER TABLE users ADD COLUMN name VARCHAR(100);');
     }
-    if (!columns.includes('password_hash')) {
+    if (!userColumns.includes('password_hash')) {
       db.exec('ALTER TABLE users ADD COLUMN password_hash VARCHAR(255);');
+    }
+    if (!userColumns.includes('has_completed_life_builder')) {
+      db.exec('ALTER TABLE users ADD COLUMN has_completed_life_builder BOOLEAN DEFAULT 0;');
     }
     // Synchronize name with username if empty
     db.exec(`UPDATE users SET name = username WHERE name IS NULL OR name = '';`);
