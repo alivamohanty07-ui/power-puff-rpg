@@ -1,0 +1,11 @@
+{
+  "name": "power-puff-rpg",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gamified RPG Productivity Web App",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "server": "npm --prefix backend run server",
+    "test": "npm --prefix backend test"
+  }
+}

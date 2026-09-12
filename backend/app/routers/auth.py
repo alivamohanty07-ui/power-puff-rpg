@@ -15,6 +15,7 @@ from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+@router.post("/register", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
 @router.post("/signup", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     """
@@ -89,7 +90,12 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """
     Authenticate user with username or email and return JWT bearer token.
     """
-    identifier = login_data.username_or_email.strip()
+    identifier = (login_data.username_or_email or login_data.email or "").strip()
+    if not identifier:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide both email and password."
+        )
     db_user = db.query(models.User).filter(
         or_(
             models.User.username == identifier,
@@ -114,6 +120,17 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
         "access_token": token,
         "token_type": "bearer",
         "user": db_user
+    }
+
+
+@router.post("/logout")
+def logout():
+    """
+    Logout endpoint for departing the realm cleanly.
+    """
+    return {
+        "success": True,
+        "message": "Successfully departed the realm gates. Safe travels!"
     }
 
 

@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 class UserBase(BaseModel):
     username: str
+    name: Optional[str] = None
     email: EmailStr
 
 class UserCreate(UserBase):
@@ -17,7 +18,8 @@ class UserCreate(UserBase):
 
 class UserLogin(BaseModel):
     # Allows logging in with either username or email
-    username_or_email: str
+    username_or_email: Optional[str] = None
+    email: Optional[str] = None
     password: str
 
 class UserThemeUpdate(BaseModel):
