@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://power-puff-backend.onrender.com/api/$1"
+    }
+  ]
+}
