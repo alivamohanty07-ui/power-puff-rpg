@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+axios.defaults.baseURL = API_URL;
+
 const AuthContext = createContext(null);
 
 // Default guest stats for instant RPG exploration
