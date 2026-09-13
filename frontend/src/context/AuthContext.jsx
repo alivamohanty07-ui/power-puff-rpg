@@ -27,6 +27,8 @@ const DEFAULT_GUEST_USER = {
 };
 
 export const AuthProvider = ({ children }) => {
+  axios.defaults.baseURL = API_URL;
+
   const [token, setToken] = useState(() => localStorage.getItem('power_puff_token') || null);
   const [user, setUser] = useState(() => {
     try {
@@ -43,6 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   // Configure axios authorization header and verify session with backend
   useEffect(() => {
+    axios.defaults.baseURL = API_URL;
     const verifySession = async () => {
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
