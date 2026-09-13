@@ -17,17 +17,11 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
 @router.post("/signup", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
-def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     Create a new adventurer account and return JWT bearer token with user profile.
+    Accepts hero username, email, password, and guild selection.
     """
-    # Verify password confirmation if provided
-    if user_in.confirm_password and user_in.password != user_in.confirm_password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Passwords do not match. Please verify your password."
-        )
-
     # Check if username or email already taken
     existing_user = db.query(models.User).filter(
         or_(
@@ -37,16 +31,19 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     ).first()
     
     if existing_user:
-        if existing_user.email.lower() == user_in.email.strip().lower():
+        if existing_user.username == user_in.username:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="An adventurer with this email is already registered."
+                detail="Username is already registered."
             )
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This hero username is already taken. Please choose another."
+                detail="Email is already registered."
             )
+
+    # Determine guild house from guild_selection or personality_house
+    chosen_house = user_in.guild_selection or user_in.personality_house or "Blossom Leader"
 
     # Hash password and initialize starter stats
     hashed_pwd = get_password_hash(user_in.password)
@@ -55,9 +52,8 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
         email=user_in.email.strip().lower(),
         hashed_password=hashed_pwd,
         selected_theme=user_in.selected_theme or "dark-dungeon",
-        personality_house=user_in.personality_house or "",
-        character_avatar=user_in.character_avatar or "emily",
-        has_completed_induction=False,
+        personality_house=chosen_house,
+        character_avatar=user_in.character_avatar or "warrior_girl",
         level=1,
         xp=0,
         gold=100,
@@ -90,12 +86,7 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """
     Authenticate user with username or email and return JWT bearer token.
     """
-    identifier = (login_data.username_or_email or login_data.email or "").strip()
-    if not identifier:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please provide both email and password."
-        )
+    identifier = login_data.username_or_email.strip()
     db_user = db.query(models.User).filter(
         or_(
             models.User.username == identifier,
@@ -120,17 +111,6 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
         "access_token": token,
         "token_type": "bearer",
         "user": db_user
-    }
-
-
-@router.post("/logout")
-def logout():
-    """
-    Logout endpoint for departing the realm cleanly.
-    """
-    return {
-        "success": True,
-        "message": "Successfully departed the realm gates. Safe travels!"
     }
 
 
@@ -191,82 +171,3 @@ def update_stats(
     db.commit()
     db.refresh(current_user)
     return current_user
-
-
-CANONICAL_HOUSES = {
-    "blossom": "House Blossom",
-    "bubbles": "House Bubbles",
-    "buttercup": "House Buttercup"
-}
-
-@router.post("/house", response_model=schemas.UserOut)
-@router.patch("/house", response_model=schemas.UserOut)
-def update_house(
-    house_data: schemas.HouseUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    """
-    Persist attuned house from the House Induction ceremony to the authenticated user.
-    """
-    raw_house = house_data.houseId or house_data.house_id or house_data.house or house_data.houseName
-    if not raw_house:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="House identifier is required."
-        )
-
-    clean_id = raw_house.strip().lower().replace("house ", "").strip()
-    if clean_id not in CANONICAL_HOUSES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid house. Valid houses are blossom, bubbles, or buttercup."
-        )
-
-    canonical_name = CANONICAL_HOUSES[clean_id]
-    current_user.personality_house = canonical_name
-    current_user.has_completed_induction = True
-    db.commit()
-    db.refresh(current_user)
-    return current_user
-
-
-@router.get("/house", response_model=schemas.HouseResponse)
-def get_house(current_user: models.User = Depends(get_current_user)):
-    """
-    Retrieve saved house for the currently authenticated user.
-    """
-    if current_user.has_completed_induction and current_user.personality_house:
-        clean_id = current_user.personality_house.strip().lower().replace("house ", "").strip()
-        canonical_name = CANONICAL_HOUSES.get(clean_id, current_user.personality_house)
-        return {
-            "completed": True,
-            "houseId": clean_id,
-            "houseName": canonical_name,
-            "selectedAt": current_user.updated_at or current_user.created_at
-        }
-    return {
-        "completed": False,
-        "houseId": None,
-        "houseName": None,
-        "selectedAt": None
-    }
-
-
-@router.patch("/avatar", response_model=schemas.UserOut)
-def update_avatar(
-    avatar_data: schemas.AvatarUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    """
-    Persist customized avatar configuration from the Avatar Creator to the authenticated user.
-    """
-    import json
-    current_user.avatar_config = json.dumps(avatar_data.avatar_data)
-    if avatar_data.name:
-        current_user.username = avatar_data.name.strip()
-    db.commit()
-    db.refresh(current_user)
-    return current_user
-

@@ -1,18 +1,16 @@
 {
   "name": "power-puff-rpg-backend",
   "version": "1.0.0",
-  "description": "Gamified RPG Backend API for Power Puff RPG",
+  "description": "Gamified RPG Productivity API for Power Puff RPG (Quests, Guilds, Bounties, and Auth)",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "server": "node server.js",
     "dev": "node server.js",
-    "test": "node test_auth.js"
+    "test": "node test_server.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2"
   }

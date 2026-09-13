@@ -198,6 +198,11 @@ export default function FloatingCompanion({
   // Check if speech bubble should flip to the left when near right edge
   const shouldFlipBubble = coords.x > (typeof window !== 'undefined' ? window.innerWidth - 280 : 800);
 
+  // If not actively perched on a card, companion rests inside the docked bottom-right HUD
+  if (!isPerched) {
+    return null;
+  }
+
   return (
     <motion.div
       className="fixed z-40 pointer-events-none select-none"
@@ -207,8 +212,8 @@ export default function FloatingCompanion({
       }}
       transition={{
         type: "spring",
-        stiffness: isPerched ? 140 : 80,
-        damping: isPerched ? 20 : 18
+        stiffness: 140,
+        damping: 20
       }}
       style={{ left: 0, top: 0 }}
     >

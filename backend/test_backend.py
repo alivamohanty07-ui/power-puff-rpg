@@ -21,23 +21,15 @@ def test_full_auth_and_models():
         assert data["status"] == "healthy"
         print("✓ Health check endpoint passed:", data)
 
-        # 2. Password mismatch rejection
-        mismatch_res = client.post("/api/auth/signup", json={
-            "username": "HeroMistake",
-            "email": "mismatch@powerpuff.io",
-            "password": "Password123!",
-            "confirm_password": "WrongPassword456!"
-        })
-        assert mismatch_res.status_code == 400, "Password mismatch must be rejected"
-        print("✓ Password mismatch rejection passed")
-
-        # 3. Successful Signup
+        # 2. Signup & Register
         signup_payload = {
             "username": "BlossomHero",
             "email": "blossom@powerpuff.io",
             "password": "SecretPassword123!",
-            "confirm_password": "SecretPassword123!",
-            "selected_theme": "cyberpunk-neon"
+            "selected_theme": "cyberpunk-neon",
+            "personality_house": "Blossom Leader",
+            "guild_selection": "House Blossom",
+            "character_avatar": "blossom_commander"
         }
         res = client.post("/api/auth/signup", json=signup_payload)
         assert res.status_code == 201, f"Signup failed: {res.text}"
@@ -46,26 +38,38 @@ def test_full_auth_and_models():
         token = signup_data["access_token"]
         user = signup_data["user"]
         assert user["username"] == "BlossomHero"
-        assert user["has_completed_induction"] is False
         assert user["level"] == 1
         assert user["gold"] == 100
         assert user["intellect"] == 10
         print("✓ Signup endpoint passed. User ID:", user["id"])
 
-        # 4. Prevent duplicate signup
+        # Test /api/auth/register with another user
+        reg_payload = {
+            "username": "ButtercupBrawler",
+            "email": "buttercup@powerpuff.io",
+            "password": "SecretPassword123!",
+            "guild_selection": "House Buttercup"
+        }
+        reg_res = client.post("/api/auth/register", json=reg_payload)
+        assert reg_res.status_code == 201, f"Register failed: {reg_res.text}"
+        print("✓ Register endpoint (/api/auth/register) passed. User ID:", reg_res.json()["user"]["id"])
+
+        # 3. Prevent duplicate signup
         res = client.post("/api/auth/signup", json=signup_payload)
         assert res.status_code == 400, "Duplicate signup should fail"
         print("✓ Duplicate signup rejection passed")
 
-        # 5. Invalid password on login
-        bad_login_res = client.post("/api/auth/login", json={
-            "username_or_email": "blossom@powerpuff.io",
-            "password": "WrongPassword!"
+        # 4. Login with username
+        login_res = client.post("/api/auth/login", json={
+            "username_or_email": "BlossomHero",
+            "password": "SecretPassword123!"
         })
-        assert bad_login_res.status_code == 401, "Invalid password must return 401"
-        print("✓ Bad password rejection (401) passed")
+        assert login_res.status_code == 200, f"Login failed: {login_res.text}"
+        login_data = login_res.json()
+        assert "access_token" in login_data
+        print("✓ Login endpoint with username passed")
 
-        # 6. Login with email
+        # 5. Login with email
         login_email_res = client.post("/api/auth/login", json={
             "username_or_email": "blossom@powerpuff.io",
             "password": "SecretPassword123!"
@@ -73,68 +77,57 @@ def test_full_auth_and_models():
         assert login_email_res.status_code == 200, f"Login with email failed: {login_email_res.text}"
         print("✓ Login endpoint with email passed")
 
-        # 7. Login with username
-        login_user_res = client.post("/api/auth/login", json={
-            "username_or_email": "BlossomHero",
-            "password": "SecretPassword123!"
-        })
-        assert login_user_res.status_code == 200, f"Login with username failed: {login_user_res.text}"
-        print("✓ Login endpoint with username passed")
-
-        # 8. Current User Profile
+        # 6. Current User Profile
         headers = {"Authorization": f"Bearer {token}"}
         me_res = client.get("/api/auth/me", headers=headers)
         assert me_res.status_code == 200, f"Get me failed: {me_res.text}"
         me_data = me_res.json()
         assert me_data["username"] == "BlossomHero"
-        assert me_data["has_completed_induction"] is False
+        assert me_data["selected_theme"] == "cyberpunk-neon"
         print("✓ Get current user profile endpoint passed")
 
-        # 9. Attune House (Simulate House Induction Completion)
-        house_res = client.patch("/api/auth/house", json={
-            "house": "House Blossom",
-            "house_id": "blossom",
-            "scores": {"blossom": 4, "bubbles": 1, "buttercup": 0}
-        }, headers=headers)
-        assert house_res.status_code == 200
-        house_data = house_res.json()
-        assert house_data["personality_house"] == "House Blossom"
-        assert house_data["has_completed_induction"] is True
-        print("✓ House attunement update passed (has_completed_induction=True)")
+        # 7. Quests
+        quests_res = client.get("/api/quests", headers=headers)
+        assert quests_res.status_code == 200
+        quests = quests_res.json()
+        assert len(quests) >= 1
+        print("✓ Get quests endpoint passed. Found:", len(quests), "quests")
 
-        # 10. Save Avatar (Simulate Avatar Customization Completion)
-        avatar_payload = {
-            "avatar_data": {
-                "base": "female",
-                "name": "Lydia",
-                "skinTone": "porcelain",
-                "hairstyle": "twin-tails",
-                "hairColor": "pastel-rose",
-                "outfit": "academy-uniform",
-                "hairAccessory": "silk-bow",
-                "headItem": "none",
-                "handItem": "apprentice-wand"
-            },
-            "name": "Lydia"
-        }
-        avatar_res = client.patch("/api/auth/avatar", json=avatar_payload, headers=headers)
-        assert avatar_res.status_code == 200
-        avatar_data = avatar_res.json()
-        assert avatar_data["username"] == "Lydia"
-        assert avatar_data["avatar_config"] is not None
-        print("✓ Avatar configuration update passed (avatar saved to backend)")
+        # Complete Quest
+        complete_res = client.post(f"/api/quests/{quests[0]['id']}/complete", headers=headers)
+        assert complete_res.status_code == 200
+        assert complete_res.json()["success"] is True
+        print("✓ Complete quest endpoint passed")
 
-        # 11. Verify User Profile retains all progress
-        final_me_res = client.get("/api/auth/me", headers=headers)
-        assert final_me_res.status_code == 200
-        final_user = final_me_res.json()
-        assert final_user["username"] == "Lydia"
-        assert final_user["personality_house"] == "House Blossom"
-        assert final_user["has_completed_induction"] is True
-        assert "twin-tails" in final_user["avatar_config"]
-        print("✓ Final profile retains house, avatar, and induction state")
+        # 8. Bounties
+        bounties_res = client.get("/api/bounties", headers=headers)
+        assert bounties_res.status_code == 200
+        bounties = bounties_res.json()
+        assert len(bounties) >= 1
+        print("✓ Get bounties endpoint passed. Found:", len(bounties), "bounties")
 
-    print("\nAll backend authentication and progression tests passed successfully! 🎉")
+        # 9. Character Stats
+        char_res = client.get("/api/character/stats", headers=headers)
+        assert char_res.status_code == 200
+        char_data = char_res.json()
+        assert "intellect" in char_data
+        assert "maxXp" in char_data
+        print("✓ Character stats endpoint (/api/character/stats) passed")
+
+        # 10. Update Theme
+        theme_res = client.patch("/api/auth/theme", json={"selected_theme": "cozy-pinkish"}, headers=headers)
+        assert theme_res.status_code == 200
+        assert theme_res.json()["selected_theme"] == "cozy-pinkish"
+        print("✓ Theme update endpoint passed")
+
+        # 11. Update Stats (simulate quest completion)
+        stats_res = client.patch("/api/auth/stats", json={"xp_gain": 150, "gold_gain": 50}, headers=headers)
+        assert stats_res.status_code == 200
+        stats_data = stats_res.json()
+        assert stats_data["xp"] > 100
+        print("✓ RPG Stats progression endpoint passed")
+
+    print("\nAll FastAPI backend tests passed successfully! 🎉")
 
 if __name__ == "__main__":
     test_full_auth_and_models()

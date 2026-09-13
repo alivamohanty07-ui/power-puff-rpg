@@ -35,43 +35,21 @@ export const AuthProvider = ({ children }) => {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('signup'); // 'login' | 'signup'
 
-  // Configure axios authorization header and verify session with backend
+  // Configure axios authorization header
   useEffect(() => {
-    const verifySession = async () => {
-      if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        try {
-          const res = await axios.get('/api/auth/me');
-          if (res.data) {
-            const profile = {
-              ...res.data,
-              maxXp: 100 * (res.data.level || 1)
-            };
-            setUser(profile);
-            setIsAuthenticated(true);
-            localStorage.setItem('power_puff_user', JSON.stringify(profile));
-          }
-        } catch (err) {
-          if (err.response?.status === 401) {
-            // Token expired or invalid
-            setToken(null);
-            localStorage.removeItem('power_puff_token');
-            setIsAuthenticated(false);
-          }
-        }
-      } else {
-        delete axios.defaults.headers.common['Authorization'];
-        setIsAuthenticated(false);
-      }
-    };
-    verifySession();
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setIsAuthenticated(true);
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+      setIsAuthenticated(false);
+    }
   }, [token]);
 
   const openAuthModal = (tab = 'signup') => {
-    setAuthModalTab(tab === 'login' ? 'login' : 'signup');
+    setAuthModalTab(tab);
     setIsAuthModalOpen(true);
   };
 
@@ -79,27 +57,16 @@ export const AuthProvider = ({ children }) => {
     setIsAuthModalOpen(false);
   };
 
-  const openOnboardingModal = () => {
-    setIsAuthModalOpen(false);
-    setIsOnboardingModalOpen(true);
-  };
-
-  const closeOnboardingModal = () => {
-    setIsOnboardingModalOpen(false);
-  };
-
   // Perform API login with graceful fallback
   const login = async (identifier, password) => {
     try {
       const res = await axios.post('/api/auth/login', {
         username_or_email: identifier,
-        email: identifier,
         password: password
       });
       const data = res.data;
       setToken(data.access_token);
       localStorage.setItem('power_puff_token', data.access_token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
 
       const profile = {
         ...data.user,
@@ -111,30 +78,25 @@ export const AuthProvider = ({ children }) => {
       closeAuthModal();
       return { success: true, user: profile };
     } catch (err) {
-      const msg = err.response?.data?.detail || err.response?.data?.error || err.response?.data?.message || 'Authentication failed. Backend unreachable.';
+      const msg = err.response?.data?.detail || 'Authentication failed. Backend unreachable.';
       return { success: false, error: msg };
     }
   };
 
-  // Perform API registration with graceful fallback
+  // Perform API signup with graceful fallback
   const signup = async (formData) => {
     try {
-      const payload = {
-        name: formData.name || formData.username,
-        username: formData.username || formData.name,
+      const res = await axios.post('/api/auth/signup', {
+        username: formData.username,
         email: formData.email,
         password: formData.password,
-        confirm_password: formData.confirm_password,
         selected_theme: formData.selected_theme || 'dark-dungeon',
-        personality_house: formData.personality_house || '',
-        character_avatar: formData.character_avatar || 'emily'
-      };
-
-      const res = await axios.post('/api/auth/register', payload);
+        personality_house: formData.personality_house || 'Blossom Leader',
+        character_avatar: formData.character_avatar || 'warrior_girl'
+      });
       const data = res.data;
       setToken(data.access_token);
       localStorage.setItem('power_puff_token', data.access_token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
 
       const profile = {
         ...data.user,
@@ -146,7 +108,7 @@ export const AuthProvider = ({ children }) => {
       closeAuthModal();
       return { success: true, user: profile };
     } catch (err) {
-      const msg = err.response?.data?.detail || err.response?.data?.error || err.response?.data?.message || 'Signup failed. Backend unreachable.';
+      const msg = err.response?.data?.detail || 'Signup failed. Backend unreachable.';
       return { success: false, error: msg };
     }
   };
@@ -158,17 +120,40 @@ export const AuthProvider = ({ children }) => {
     closeAuthModal();
   };
 
-  // Logout cleanly from both frontend and backend
-  const logout = async () => {
+  // Create customized character and enter immediately
+  const createCustomCharacter = (customData) => {
+    const newProfile = {
+      ...DEFAULT_GUEST_USER,
+      username: customData.username || 'Cyber Adventurer',
+      personality_house: customData.personality_house || 'Blossom Leader',
+      character_avatar: customData.character_avatar || 'ren',
+      selected_theme: customData.selected_theme || 'cyberpunk-neon',
+      archetype: customData.archetype || 'Netrunner Specialist',
+      tactical_gear: customData.tactical_gear || 'Neural Overclock Visor',
+      intellect: customData.intellect ?? 18,
+      strength: customData.strength ?? 14,
+      vitality: customData.vitality ?? 16,
+      mind: customData.mind ?? 20,
+      level: 1,
+      xp: 0,
+      maxXp: 100,
+      gold: 500,
+      streak: 1
+    };
+    setUser(newProfile);
     try {
-      if (token) {
-        await axios.post('/api/auth/logout');
-      }
+      localStorage.setItem('power_puff_user', JSON.stringify(newProfile));
     } catch {}
+    setIsAuthenticated(true);
+    closeAuthModal();
+    return newProfile;
+  };
+
+  // Logout
+  const logout = () => {
     setToken(null);
     localStorage.removeItem('power_puff_token');
     localStorage.removeItem('power_puff_user');
-    delete axios.defaults.headers.common['Authorization'];
     setUser(DEFAULT_GUEST_USER);
     setIsAuthenticated(false);
   };
@@ -224,97 +209,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Sync house attunement with backend (POST /api/users/me/house)
-  const saveHouseToBackend = async (houseName, houseId, scores = {}) => {
-    if (token) {
-      try {
-        const res = await axios.post('/api/users/me/house', {
-          houseId: houseId,
-          houseName: houseName,
-          scores: scores
-        });
-        if (res.data) {
-          const canonicalName = res.data.houseName || houseName;
-          setUser(prev => {
-            const updated = {
-              ...(prev || {}),
-              personality_house: canonicalName,
-              house: canonicalName,
-              houseId: res.data.houseId || houseId,
-              has_completed_induction: true
-            };
-            try {
-              localStorage.setItem('power_puff_user', JSON.stringify(updated));
-            } catch {}
-            return updated;
-          });
-          return { success: true, data: res.data };
-        }
-      } catch (err) {
-        const errorMsg = err.response?.data?.detail || err.message || 'Your house could not be recorded. Please try again.';
-        console.error('Backend house save error:', errorMsg);
-        return { success: false, error: errorMsg };
-      }
-    }
-    return { success: true };
-  };
-
-  // Retrieve saved house selection from backend (GET /api/users/me/house)
-  const getSavedHouseFromBackend = async () => {
-    if (token) {
-      try {
-        const res = await axios.get('/api/users/me/house');
-        return res.data;
-      } catch (err) {
-        console.warn('Failed to fetch house selection:', err);
-      }
-    }
-    return { completed: false, houseId: null };
-  };
-
-  // Sync avatar customization with backend
-  const saveAvatarToBackend = async (avatarData, characterName) => {
-    if (token) {
-      try {
-        const res = await axios.patch('/api/auth/avatar', {
-          avatar_data: avatarData,
-          name: characterName
-        });
-        if (res.data) {
-          setUser(prev => ({
-            ...(prev || {}),
-            username: characterName || prev.username,
-            avatar_config: JSON.stringify(avatarData)
-          }));
-        }
-      } catch (err) {
-        console.warn('Backend avatar sync failed, progress persisted locally:', err);
-      }
-    }
-  };
-
   return (
     <AuthContext.Provider value={{
       user,
-      setUser,
       token,
       isAuthenticated,
-      setIsAuthenticated,
       isAuthModalOpen,
-      isOnboardingModalOpen,
       authModalTab,
       openAuthModal,
       closeAuthModal,
-      openOnboardingModal,
-      closeOnboardingModal,
       login,
       signup,
       logout,
       enterAsGuest,
-      awardRewards,
-      saveHouseToBackend,
-      getSavedHouseFromBackend,
-      saveAvatarToBackend
+      createCustomCharacter,
+      awardRewards
     }}>
       {children}
     </AuthContext.Provider>

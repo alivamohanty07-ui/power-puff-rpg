@@ -88,6 +88,12 @@ export default function VirtualWorldView({ onBackToOverview }) {
               </h1>
               <p className="text-xs text-rpg-muted">
                 House: <span className="text-rpg-accent font-bold">{user.personality_house || 'Blossom Leader'}</span> • Realm: <span className="font-bold text-rpg-text">{activeTheme.name}</span>
+                {user.archetype && (
+                  <> • Class: <span className="text-cyan-300 font-bold">{user.archetype}</span></>
+                )}
+                {user.tactical_gear && (
+                  <> • Gear: <span className="text-amber-300 font-bold">{user.tactical_gear}</span></>
+                )}
               </p>
             </div>
           </div>
