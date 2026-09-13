@@ -47,6 +47,7 @@ class Task(Base):
     description = Column(Text, nullable=True)
     map_location = Column(String(100), default="Town Square", nullable=False)
     difficulty = Column(String(50), default="Medium", nullable=False)
+    attribute = Column(String(50), default="Intellect", nullable=False)
     xp_reward = Column(Integer, default=50, nullable=False)
     gold_reward = Column(Integer, default=20, nullable=False)
     is_completed = Column(Boolean, default=False, nullable=False)
@@ -54,6 +55,20 @@ class Task(Base):
 
     # Relationship
     user = relationship("User", back_populates="tasks")
+
+
+class Bounty(Base):
+    __tablename__ = "bounties"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    target_house = Column(String(100), default="All", nullable=False)
+    bounty_type = Column(String(50), default="Daily Sprint", nullable=False)
+    xp_reward = Column(Integer, default=100, nullable=False)
+    gold_reward = Column(Integer, default=75, nullable=False)
+    is_claimed = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class Lounge(Base):

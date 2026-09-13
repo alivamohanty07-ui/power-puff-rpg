@@ -1,0 +1,147 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "BlossomHero",
+      "email": "blossom@powerpuff.io",
+      "salt": "demorpgsalt123",
+      "hashed_password": "81b4382b90440640ada0761e6995a86d6d4a071d048050e7a5fc79ab8316a2aa",
+      "selected_theme": "cyberpunk-neon",
+      "personality_house": "Blossom Leader",
+      "character_avatar": "ren",
+      "level": 2,
+      "xp": 150,
+      "gold": 500,
+      "streak": 3,
+      "intellect": 18,
+      "strength": 14,
+      "vitality": 16,
+      "mind": 20,
+      "created_at": "2026-09-12T15:50:24.096Z"
+    },
+    {
+      "id": 2,
+      "username": "TestHero_1789228224169",
+      "email": "hero_1789228224169@powerpuff.io",
+      "salt": "13ab4da2589b856f0ffb3c9242eeb989",
+      "hashed_password": "98935515ca044a4246395d8fde855dabd95f8710c1a4b5a75382ad4f2105108a",
+      "selected_theme": "dark-dungeon",
+      "personality_house": "House Blossom",
+      "character_avatar": "ren",
+      "level": 1,
+      "xp": 60,
+      "gold": 135,
+      "streak": 2,
+      "intellect": 10,
+      "strength": 10,
+      "vitality": 10,
+      "mind": 10,
+      "created_at": "2026-09-12T15:50:24.243Z"
+    },
+    {
+      "id": 3,
+      "username": "TestHero_1789228262687",
+      "email": "hero_1789228262687@powerpuff.io",
+      "salt": "83a682b960f1eaf2d0677c5a5bbd8ba6",
+      "hashed_password": "cb1dd08c031bbc78b4688b442d25fece749b6551d1033b868918077248113437",
+      "selected_theme": "dark-dungeon",
+      "personality_house": "House Blossom",
+      "character_avatar": "ren",
+      "level": 1,
+      "xp": 60,
+      "gold": 135,
+      "streak": 2,
+      "intellect": 10,
+      "strength": 10,
+      "vitality": 10,
+      "mind": 10,
+      "created_at": "2026-09-12T15:51:02.745Z"
+    }
+  ],
+  "quests": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "title": "Deep Work Sprint: Banish Procrastination",
+      "description": "25-minute focused sprint without notifications or distraction.",
+      "map_location": "Town Square",
+      "difficulty": "Medium",
+      "attribute": "Intellect",
+      "xp_reward": 60,
+      "gold_reward": 35,
+      "is_completed": true,
+      "created_at": "2026-09-12T15:50:24.098Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "title": "Physical Armor Conditioning (30m Workout)",
+      "description": "Engage in physical resistance or high-intensity body workout.",
+      "map_location": "Town Square",
+      "difficulty": "Hard",
+      "attribute": "Strength",
+      "xp_reward": 75,
+      "gold_reward": 40,
+      "is_completed": false,
+      "created_at": "2026-09-12T15:50:24.098Z"
+    },
+    {
+      "id": 3,
+      "user_id": 1,
+      "title": "Hydration & Mindful Recharge Ritual",
+      "description": "Drink 500ml water, stretch spine, and breathe deeply.",
+      "map_location": "Blossom Sanctuary",
+      "difficulty": "Easy",
+      "attribute": "Vitality",
+      "xp_reward": 40,
+      "gold_reward": 20,
+      "is_completed": false,
+      "created_at": "2026-09-12T15:50:24.098Z"
+    },
+    {
+      "id": 4,
+      "user_id": 1,
+      "title": "Refactor Legacy Code / Polish Architecture",
+      "description": "Confront the most formidable boss engineering quest of the day.",
+      "map_location": "Neon Citadel",
+      "difficulty": "Boss",
+      "attribute": "Intellect",
+      "xp_reward": 90,
+      "gold_reward": 50,
+      "is_completed": false,
+      "created_at": "2026-09-12T15:50:24.098Z"
+    }
+  ],
+  "bounties": [
+    {
+      "id": 1,
+      "title": "Bounty: Morning Procrastination Specter",
+      "description": "Slay your toughest task before 11:00 AM.",
+      "target_house": "House Buttercup",
+      "bounty_type": "Daily Grit",
+      "xp_reward": 120,
+      "gold_reward": 100,
+      "is_claimed": false
+    },
+    {
+      "id": 2,
+      "title": "Bounty: Codebase Fortification Raid",
+      "description": "Complete 3 Pomodoro sprints with zero browser tab distractions.",
+      "target_house": "House Blossom",
+      "bounty_type": "Deep Focus",
+      "xp_reward": 150,
+      "gold_reward": 120,
+      "is_claimed": false
+    },
+    {
+      "id": 3,
+      "title": "Bounty: Radiant Sanctuary Recharge",
+      "description": "Log 8 hours of restorative sleep and hit 2L hydration goal.",
+      "target_house": "House Bubbles",
+      "bounty_type": "Vitality Ritual",
+      "xp_reward": 100,
+      "gold_reward": 80,
+      "is_claimed": false
+    }
+  ]
+}

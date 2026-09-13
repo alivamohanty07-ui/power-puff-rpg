@@ -11,13 +11,12 @@ class Settings(BaseSettings):
     # Defaults to SQLite for immediate local readiness; overrides with PostgreSQL via DATABASE_URL
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./powerpuff.db")
     
-    # CORS Origins
+    # CORS Origins - strictly specific origins required when allow_credentials=True
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "*"
+        "http://127.0.0.1:3000"
     ]
 
     class Config:

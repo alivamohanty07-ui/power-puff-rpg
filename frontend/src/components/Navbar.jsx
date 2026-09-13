@@ -63,106 +63,109 @@ export default function Navbar({
     <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-rpg-bg/85 border-b border-rpg-border transition-colors duration-700 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
         
-        {/* Animated Brand Logo */}
-        <motion.div 
-          onClick={() => setCurrentView && setCurrentView('home')}
-          className="flex items-center gap-3.5 cursor-pointer select-none"
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-          <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-rpg-card border-2 border-rpg-accent shadow-theme-glow overflow-hidden">
-            <motion.div
-              animate={{ rotate: [0, 8, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-            >
-              <Sword className="w-6 h-6 text-rpg-accent" />
-            </motion.div>
-            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rpg-secondary animate-ping" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rpg-secondary" />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-black text-lg sm:text-xl tracking-wider text-rpg-text">
-                POWER PUFF
-              </span>
-              <span className="px-2 py-0.5 text-[10px] font-pixel font-bold rounded bg-gradient-to-r from-rpg-accent to-rpg-secondary text-white shadow-sm">
-                RPG
-              </span>
+        {/* Left Side: Brand Logo + Grouped Navigation Links */}
+        <div className="flex items-center gap-6 lg:gap-8">
+          {/* Animated Brand Logo */}
+          <motion.div 
+            onClick={() => setCurrentView && setCurrentView('home')}
+            className="flex items-center gap-3 cursor-pointer select-none"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+            <div className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-rpg-card border-2 border-rpg-accent shadow-theme-glow overflow-hidden">
+              <motion.div
+                animate={{ rotate: [0, 8, -8, 0] }}
+                transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+              >
+                <Sword className="w-5 h-5 text-rpg-accent" />
+              </motion.div>
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rpg-secondary animate-ping" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rpg-secondary" />
             </div>
-            <p className="text-[10px] font-tech font-bold tracking-widest uppercase text-rpg-muted">
-              GAMIFIED PRODUCTIVITY REALM
-            </p>
-          </div>
-        </motion.div>
 
-        {/* Center: Tactile Navigation Links with Animated Sliding Indicator */}
-        <nav 
-          className="hidden md:flex items-center gap-1 font-tech font-bold text-sm uppercase tracking-wider text-rpg-muted"
-          onMouseLeave={() => setHoveredNav(null)}
-        >
-          {navLinks.map((link) => (
-            <button
-              key={link.id}
-              onClick={() => scrollToSection(link.id)}
-              onMouseEnter={() => setHoveredNav(link.id)}
-              className="relative px-3.5 py-2 rounded-xl transition-colors hover:text-rpg-text"
-            >
-              <span className="relative z-10">{link.label}</span>
-              {hoveredNav === link.id && (
-                <motion.span
-                  layoutId="nav-indicator"
-                  className="absolute inset-0 rounded-xl bg-rpg-card border border-rpg-accent/60 shadow-theme-glow"
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                />
-              )}
-            </button>
-          ))}
-        </nav>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-display font-black text-base sm:text-lg tracking-wider text-rpg-text">
+                  POWER PUFF
+                </span>
+                <span className="px-1.5 py-0.5 text-[9px] font-pixel font-bold rounded bg-gradient-to-r from-rpg-accent to-rpg-secondary text-white shadow-sm">
+                  RPG
+                </span>
+              </div>
+              <p className="text-[9px] font-tech font-bold tracking-widest uppercase text-rpg-muted">
+                PRODUCTIVITY REALM
+              </p>
+            </div>
+          </motion.div>
 
-        {/* Right Section: Companion Switcher, Theme Selector & Auth Action */}
-        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Navigation Links Grouped on the Left Next to Logo */}
+          <nav 
+            className="hidden md:flex items-center gap-1 font-tech font-bold text-xs sm:text-sm uppercase tracking-wider text-rpg-muted"
+            onMouseLeave={() => setHoveredNav(null)}
+          >
+            {navLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollToSection(link.id)}
+                onMouseEnter={() => setHoveredNav(link.id)}
+                className="relative px-3 py-1.5 rounded-xl transition-colors hover:text-rpg-text cursor-pointer"
+              >
+                <span className="relative z-10">{link.label}</span>
+                {hoveredNav === link.id && (
+                  <motion.span
+                    layoutId="nav-indicator"
+                    className="absolute inset-0 rounded-xl bg-rpg-card border border-rpg-accent/60 shadow-theme-glow"
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Right Section: Compact Group of Character Toggle, Theme Switcher & Auth Action */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
           
-          {/* Dual Companion Switcher Pill: [ 🌸 Emily (Angel) ♀ | ⚡ Ren (Knight) ♂ ] */}
-          <div className="hidden sm:flex items-center p-1 rounded-xl bg-rpg-card border border-rpg-border shadow-sm">
+          {/* Compact Dual Companion Switcher Pill: [ 🌸 Emily | ⚡ Ren ] */}
+          <div className="flex items-center p-0.5 rounded-xl bg-rpg-card border border-rpg-border shadow-sm">
             <button
               onClick={() => onSelectCompanion && onSelectCompanion('emily')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-tech font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+              className={`px-2 py-1 rounded-lg text-xs font-tech font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
                 (companionChar === 'emily' || companionChar === 'aiko')
                   ? 'bg-pink-500/20 text-pink-300 border border-pink-500/50 shadow-theme-glow'
                   : 'text-rpg-muted hover:text-rpg-text'
               }`}
-              title="Choose Emily (Angel) ♀ (Celestial Fairy Guide)"
+              title="Choose Emily (Celestial Fairy Guide)"
             >
-              <span>🌸 Emily (Angel) ♀</span>
+              <span>🌸 Emily</span>
             </button>
             <button
               onClick={() => onSelectCompanion && onSelectCompanion('ren')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-tech font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+              className={`px-2 py-1 rounded-lg text-xs font-tech font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
                 companionChar === 'ren'
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-theme-glow'
                   : 'text-rpg-muted hover:text-rpg-text'
               }`}
-              title="Choose Ren (Knight) ♂ (Cyber Knight Scout)"
+              title="Choose Ren (Cyber Knight Scout)"
             >
-              <span>⚡ Ren (Knight) ♂</span>
+              <span>⚡ Ren</span>
             </button>
           </div>
 
-          {/* 4-Theme Dropdown Switcher */}
+          {/* Compact 4-Theme Dropdown Switcher */}
           <div className="relative" ref={themeDropdownRef}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-              className="game-card flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-rpg-border text-xs font-tech font-bold text-rpg-text shadow-sm"
+              className="game-card flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-rpg-border text-xs font-tech font-bold text-rpg-text shadow-sm cursor-pointer"
               title="Switch Visual Realm Theme"
             >
-              <span className="text-base">{activeTheme.icon}</span>
+              <span className="text-sm">{activeTheme.icon}</span>
               <span className="hidden sm:inline font-display tracking-wider text-xs">{activeTheme.name}</span>
               <span 
-                className="w-3 h-3 rounded-full border border-white/30 shadow-[0_0_8px_var(--rpg-accent-glow)]" 
+                className="w-2.5 h-2.5 rounded-full border border-white/30 shadow-[0_0_8px_var(--rpg-accent-glow)]" 
                 style={{ backgroundColor: activeTheme.accent }}
               />
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${themeDropdownOpen ? 'rotate-180' : ''}`} />

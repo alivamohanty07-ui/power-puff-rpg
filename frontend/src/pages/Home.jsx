@@ -20,7 +20,10 @@ import {
   Terminal,
   Radio,
   UserCheck,
-  Check
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Minus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -28,6 +31,7 @@ import AnimeMascot from '../components/AnimeMascot';
 import FloatingCompanion from '../components/FloatingCompanion';
 import ThemeEnvironment from '../components/ThemeEnvironment';
 import GameFXCanvas, { triggerGameFX } from '../components/GameFX';
+import CharacterCreatorModal from '../components/CharacterCreatorModal';
 
 export default function Home({ 
   companionChar: propCompanionChar, 
@@ -35,6 +39,12 @@ export default function Home({
 }) {
   const { openAuthModal } = useAuth();
   const { currentTheme, setTheme, themes } = useTheme();
+
+  // Character Creator Onboarding Modal state
+  const [isCharacterCreatorOpen, setIsCharacterCreatorOpen] = useState(false);
+
+  // Floating Companion HUD docking & minimize state
+  const [isCompanionMinimized, setIsCompanionMinimized] = useState(false);
 
   // Active Companion Character: 'emily' (Angel/Fairy) or 'ren' (Knight/Mage)
   const [internalCompanionChar, setInternalCompanionChar] = useState(() => {
@@ -418,7 +428,7 @@ export default function Home({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="font-display font-black text-4xl sm:text-6xl lg:text-7xl tracking-wide text-rpg-text leading-[1.15] max-w-5xl mx-auto uppercase drop-shadow-lg"
+          className="font-display font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight text-rpg-text leading-[1.15] max-w-4xl mx-auto uppercase drop-shadow-lg"
         >
           Transform Tasks Into{' '}
           <span className="shimmer-text drop-shadow-[0_0_30px_var(--rpg-accent-glow)]">
@@ -435,13 +445,14 @@ export default function Home({
           Level up your real-world stats. Conquer procrastination, harvest gold bounties, align with ancient personality guilds, and raid daily goals with friends.
         </motion.p>
 
-        {/* Action Buttons with Tactile Spring Micro-interactions */}
+        {/* Action Buttons with Clear Hierarchy */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-5"
+          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 flex-wrap"
         >
+          {/* Primary CTA: ENTER VIRTUAL WORLD (Solid bright neon/cyan glow fill, high contrast text) */}
           <motion.button
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
@@ -451,13 +462,31 @@ export default function Home({
               triggerGameFX('gold', rect.left + rect.width / 2, rect.top + rect.height / 2);
               openAuthModal('signup');
             }}
-            className="game-btn-primary w-full sm:w-auto px-10 py-4 rounded-2xl text-white font-tech font-black text-sm sm:text-base tracking-widest uppercase flex items-center justify-center gap-3 shadow-theme-glow-lg cursor-pointer"
+            className="w-full sm:w-auto px-9 py-4 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-300 text-slate-950 font-display font-black text-sm sm:text-base tracking-widest uppercase flex items-center justify-center gap-3 shadow-[0_0_35px_rgba(6,182,212,0.85)] hover:shadow-[0_0_50px_rgba(6,182,212,1)] hover:brightness-110 cursor-pointer border-2 border-cyan-200"
           >
-            <Sword className="w-5 h-5 animate-pulse" />
+            <Sword className="w-5 h-5 fill-slate-950 animate-pulse" />
             <span>Enter Virtual World</span>
             <ArrowRight className="w-4 h-4" />
           </motion.button>
 
+          {/* Secondary Ghost CTA: CHARACTER CREATOR (Subtle transparent outline with cyan hover glow) */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              triggerGameFX('cyberpunk', rect.left + rect.width / 2, rect.top + rect.height / 2);
+              setIsCharacterCreatorOpen(true);
+            }}
+            className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-cyan-950/20 border-2 border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-300 hover:bg-cyan-500/15 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] transition-all font-display font-bold text-sm sm:text-base tracking-wider uppercase flex items-center justify-center gap-2.5 cursor-pointer backdrop-blur-md"
+          >
+            <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <span>Character Creator</span>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400/80" />
+          </motion.button>
+
+          {/* Secondary Ghost CTA: EXPLORE LORE & GUILDS (Subtle transparent outline with theme hover glow) */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -465,179 +494,11 @@ export default function Home({
               const el = document.getElementById('houses');
               el?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="game-card w-full sm:w-auto px-8 py-4 rounded-2xl border border-rpg-border text-rpg-text font-tech font-bold text-sm sm:text-base tracking-wider uppercase hover:border-rpg-accent transition-all flex items-center justify-center gap-2.5"
+            className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-rpg-card/40 border-2 border-rpg-border/70 text-rpg-muted hover:text-rpg-text hover:border-rpg-accent hover:bg-rpg-accent/10 hover:shadow-theme-glow transition-all font-tech font-bold text-sm sm:text-base tracking-wider uppercase flex items-center justify-center gap-2.5 cursor-pointer backdrop-blur-md"
           >
             <BookOpen className="w-4 h-4 text-rpg-accent" />
             <span>Explore Lore & Guilds</span>
           </motion.button>
-        </motion.div>
-
-        {/* ================= 2. SELF-CONTAINED ANIME MASCOT COMPANION HUD ================= */}
-        <motion.div
-          className="game-card hud-frame max-w-3xl mx-auto p-5 sm:p-6 rounded-3xl border-2 border-rpg-border/90 flex flex-col my-12 backdrop-blur-2xl transition-all duration-500 hover:border-rpg-accent"
-          initial={{ y: 25, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 220, damping: 22 }}
-        >
-          {/* Top Companion Controls Bar: Avatar Switcher & Cursor Follow Mode */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-rpg-border/60">
-            <div className="flex items-center gap-2">
-              <span className="font-tech text-xs uppercase font-bold text-rpg-muted mr-1">
-                COMPANION:
-              </span>
-              <button
-                onClick={() => handleSelectCompanion('emily')}
-                className={`px-3 py-1 rounded-xl text-xs font-tech font-bold uppercase tracking-wider border transition-all flex items-center gap-1.5 cursor-pointer ${
-                  (companionChar === 'emily' || companionChar === 'aiko')
-                    ? 'bg-pink-500/20 border-pink-400 text-pink-300 shadow-theme-glow'
-                    : 'bg-rpg-bg border-rpg-border text-rpg-muted hover:border-rpg-muted'
-                }`}
-              >
-                <span>🌸 Emily (Angel) ♀</span>
-                {(companionChar === 'emily' || companionChar === 'aiko') && <Check className="w-3 h-3 text-pink-400" />}
-              </button>
-
-              <button
-                onClick={() => handleSelectCompanion('ren')}
-                className={`px-3 py-1 rounded-xl text-xs font-tech font-bold uppercase tracking-wider border transition-all flex items-center gap-1.5 cursor-pointer ${
-                  companionChar === 'ren'
-                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-theme-glow'
-                    : 'bg-rpg-bg border-rpg-border text-rpg-muted hover:border-rpg-muted'
-                }`}
-              >
-                <span>⚡ Ren (Knight) ♂</span>
-                {companionChar === 'ren' && <Check className="w-3 h-3 text-cyan-400" />}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-tech font-bold uppercase tracking-wider bg-purple-500/15 border border-purple-400/40 text-purple-300 shadow-theme-glow">
-              <Compass className="w-3.5 h-3.5 text-rpg-accent animate-spin" style={{ animationDuration: '8s' }} />
-              <span>Right Margin Guide Active</span>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            {/* Mascot Avatar Stage */}
-            <div 
-              onClick={handlePokeMascot}
-              className="relative flex-shrink-0 cursor-pointer group flex flex-col items-center"
-              title="Click to interact with your companion!"
-            >
-              <div className="relative p-2 rounded-3xl bg-gradient-to-b from-rpg-card to-rpg-bg border-2 border-rpg-accent shadow-theme-glow group-hover:scale-105 transition-transform duration-300">
-                {/* Scanline overlay */}
-                <div className="absolute inset-0 scanline-texture opacity-30 pointer-events-none rounded-3xl" />
-                
-                {/* Anime Mascot Vector Graphic */}
-                <AnimeMascot 
-                  character={companionChar}
-                  pose={mascotSpeech.pose} 
-                  currentTheme={currentTheme} 
-                  size={115} 
-                />
-
-                {/* Live Indicator Ping */}
-                <span className="absolute top-2 right-2 w-3 h-3 rounded-full bg-rpg-secondary animate-ping" />
-                <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-rpg-secondary" />
-              </div>
-
-              <motion.span 
-                className="mt-2 inline-flex items-center gap-1 text-[10px] font-tech font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-rpg-bg border border-rpg-border text-rpg-accent group-hover:border-rpg-accent"
-                whileHover={{ scale: 1.05 }}
-              >
-                <Radio className="w-2.5 h-2.5 animate-pulse" /> POKE COMPANION
-              </motion.span>
-            </div>
-
-            {/* Tactical Speech Bubble Box */}
-            <div className="flex-grow text-left w-full">
-              {/* Top Status Strip */}
-              <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-rpg-border/60">
-                <div className="flex items-center gap-2">
-                  <Terminal className="w-3.5 h-3.5 text-rpg-accent" />
-                  <span className="font-display font-bold text-xs sm:text-sm tracking-wider text-rpg-text uppercase">
-                    {mascotSpeech.title}
-                  </span>
-                </div>
-                
-                <span className="font-tech font-bold text-[11px] px-2.5 py-0.5 rounded border border-rpg-accent/40 bg-rpg-accent/15 text-rpg-accent uppercase tracking-wider shadow-sm">
-                  {mascotSpeech.mood}
-                </span>
-              </div>
-
-            {/* Dynamic Dialogue Text */}
-            <div className="min-h-[55px] flex items-center">
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={mascotSpeech.message}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 8 }}
-                  transition={{ duration: 0.25 }}
-                  className="font-sans text-xs sm:text-sm text-rpg-text/90 leading-relaxed font-medium"
-                >
-                  "{mascotSpeech.message}"
-                </motion.p>
-              </AnimatePresence>
-            </div>
-
-            {/* Quick Interaction Action Chips */}
-            <div className="mt-3 pt-3 border-t border-rpg-border/40 flex flex-wrap items-center gap-2">
-              <span className="font-tech text-[10px] uppercase font-bold text-rpg-muted mr-1">
-                QUICK TRANSMISSION:
-              </span>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={(e) => handleSelectAttribute('intellect', e)}
-                className="px-2.5 py-1 rounded-lg bg-rpg-bg/80 border border-rpg-border hover:border-rpg-accent text-[11px] font-tech font-bold tracking-wider text-rpg-text flex items-center gap-1 transition-colors"
-              >
-                <Brain className="w-3 h-3 text-indigo-400" />
-                <span>Deep Work Tips</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={(e) => handleSelectHouse('blossom', e)}
-                className="px-2.5 py-1 rounded-lg bg-rpg-bg/80 border border-rpg-border hover:border-rpg-accent text-[11px] font-tech font-bold tracking-wider text-rpg-text flex items-center gap-1 transition-colors"
-              >
-                <Heart className="w-3 h-3 text-pink-400" />
-                <span>House Blossom</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={(e) => handleSelectHouse('buttercup', e)}
-                className="px-2.5 py-1 rounded-lg bg-rpg-bg/80 border border-rpg-border hover:border-rpg-accent text-[11px] font-tech font-bold tracking-wider text-rpg-text flex items-center gap-1 transition-colors"
-              >
-                <Sword className="w-3 h-3 text-lime-400" />
-                <span>House Buttercup</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  const el = document.getElementById('journey');
-                  el?.scrollIntoView({ behavior: 'smooth' });
-                  setMascotSpeech({
-                    title: "PIXEL BUDDY // MAP SCOUT",
-                    message: "Here is your 3-Step Heroic Roadmap! Follow the glowing celestial route to level up your real life! 🗺️✨",
-                    mood: "EXPLORING",
-                    pose: "jump"
-                  });
-                }}
-                className="px-2.5 py-1 rounded-lg bg-rpg-bg/80 border border-rpg-border hover:border-rpg-accent text-[11px] font-tech font-bold tracking-wider text-rpg-text flex items-center gap-1 transition-colors"
-              >
-                <Compass className="w-3 h-3 text-amber-400" />
-                <span>3-Step Map</span>
-              </motion.button>
-            </div>
-          </div>
-        </div>
-
         </motion.div>
 
       </section>
@@ -1006,6 +867,23 @@ export default function Home({
                     {node.desc}
                   </p>
 
+                  {node.step === 2 && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        triggerGameFX('cyberpunk', rect.left + rect.width / 2, rect.top + rect.height / 2);
+                        setIsCharacterCreatorOpen(true);
+                      }}
+                      className="mt-3 px-3.5 py-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 hover:text-white text-xs font-tech font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.3)] cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                      <span>Launch Character Creator</span>
+                    </motion.button>
+                  )}
+
                   <div className="mt-4 pt-3 border-t border-rpg-border/50 w-full flex items-center justify-center gap-1 text-[11px] font-tech text-rpg-muted">
                     <MapPin className="w-3 h-3 text-rpg-accent" />
                     <span>{isSelected ? 'CURRENT INSPECTION' : 'CLICK TO INSPECT'}</span>
@@ -1032,7 +910,22 @@ export default function Home({
               Leave monotonous to-do lists behind. Forge your character, attune your realm, and level up your life today.
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-5">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 flex-wrap">
+              {/* Cyberpunk Character Creator Button */}
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  triggerGameFX('cyberpunk', rect.left + rect.width / 2, rect.top + rect.height / 2);
+                  setIsCharacterCreatorOpen(true);
+                }}
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-amber-400 text-slate-950 font-display font-black text-sm sm:text-base uppercase tracking-widest shadow-[0_0_30px_rgba(6,182,212,0.6)] flex items-center justify-center gap-2 cursor-pointer border-2 border-cyan-300 hover:brightness-110"
+              >
+                <Zap className="w-5 h-5 fill-slate-950 animate-pulse" />
+                <span>Character Creator</span>
+              </motion.button>
+
               <motion.button
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
@@ -1041,10 +934,10 @@ export default function Home({
                   triggerGameFX('gold', rect.left + rect.width / 2, rect.top + rect.height / 2);
                   openAuthModal('signup');
                 }}
-                className="game-btn-primary w-full sm:w-auto px-10 py-4 rounded-2xl text-white font-tech font-black text-sm sm:text-base uppercase tracking-widest shadow-theme-glow-lg flex items-center justify-center gap-2 cursor-pointer"
+                className="game-btn-primary w-full sm:w-auto px-8 py-4 rounded-2xl text-white font-tech font-black text-sm sm:text-base uppercase tracking-widest shadow-theme-glow-lg flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Sparkles className="w-5 h-5" />
-                <span>Forge Character & Enter</span>
+                <span>Enter Virtual World</span>
               </motion.button>
 
               <motion.button
@@ -1081,6 +974,238 @@ export default function Home({
         perchTarget={perchTarget}
         onDismissPerch={() => setPerchTarget(null)}
       />
+
+      {/* ================= 9. CYBERPUNK CHARACTER CREATOR ONBOARDING MODAL ================= */}
+      <CharacterCreatorModal
+        isOpen={isCharacterCreatorOpen}
+        onClose={() => setIsCharacterCreatorOpen(false)}
+        companionChar={companionChar}
+        onSelectCompanion={handleSelectCompanion}
+      />
+
+      {/* ================= 10. DOCKED FLOATING COMPANION HUD WIDGET ================= */}
+      <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 select-none">
+        <AnimatePresence mode="wait">
+          {isCompanionMinimized ? (
+            /* Minimized Floating Pill */
+            <motion.button
+              key="minimized"
+              initial={{ opacity: 0, scale: 0.85, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 15 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsCompanionMinimized(false)}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-slate-950/95 border-2 border-cyan-400/80 text-white shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:shadow-[0_0_40px_rgba(6,182,212,0.7)] backdrop-blur-xl cursor-pointer group"
+              title="Expand Companion Tactical HUD"
+            >
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-400/60 shadow-inner">
+                <span className="text-base">{companionChar === 'ren' ? '⚡' : '🌸'}</span>
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+              <div className="text-left">
+                <div className="font-display font-black text-xs tracking-wider text-cyan-300 group-hover:text-cyan-200 uppercase">
+                  {companionChar === 'ren' ? 'REN // SCOUT' : 'EMILY // GUIDE'}
+                </div>
+                <div className="font-tech text-[10px] text-slate-400 tracking-wider uppercase">
+                  {mascotSpeech.mood}
+                </div>
+              </div>
+              <div className="p-1 rounded-lg bg-cyan-500/20 text-cyan-300 ml-1 group-hover:bg-cyan-500/40 transition-colors">
+                <ChevronUp className="w-4 h-4" />
+              </div>
+            </motion.button>
+          ) : (
+            /* Expanded Tactical HUD Card */
+            <motion.div
+              key="expanded"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 350, damping: 26 }}
+              className="w-[calc(100vw-2.5rem)] sm:w-[410px] max-w-sm rounded-3xl border-2 border-cyan-500/60 bg-slate-950/95 p-4 sm:p-5 shadow-[0_12px_45px_rgba(0,0,0,0.9),0_0_35px_rgba(6,182,212,0.3)] backdrop-blur-2xl transition-all"
+            >
+              {/* Header Bar: Companion Switcher + Live Status + Minimize Button */}
+              <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-800">
+                {/* Companion Switcher */}
+                <div className="flex items-center gap-1.5 p-0.5 rounded-xl bg-slate-900 border border-slate-800">
+                  <button
+                    onClick={() => handleSelectCompanion('emily')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-tech font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer ${
+                      (companionChar === 'emily' || companionChar === 'aiko')
+                        ? 'bg-pink-500/25 border border-pink-400 text-pink-300 shadow-[0_0_12px_rgba(236,72,153,0.4)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>🌸 Emily</span>
+                    {(companionChar === 'emily' || companionChar === 'aiko') && <Check className="w-3 h-3 text-pink-400" />}
+                  </button>
+
+                  <button
+                    onClick={() => handleSelectCompanion('ren')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-tech font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer ${
+                      companionChar === 'ren'
+                        ? 'bg-cyan-500/25 border border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>⚡ Ren</span>
+                    {companionChar === 'ren' && <Check className="w-3 h-3 text-cyan-400" />}
+                  </button>
+                </div>
+
+                {/* Right controls: Active Pulse and Minimize Toggle */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-tech font-bold uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>HUD LIVE</span>
+                  </div>
+
+                  <button
+                    onClick={() => setIsCompanionMinimized(true)}
+                    className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    title="Minimize Companion HUD"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Body: Mascot Avatar + High Contrast Dialogue Box */}
+              <div className="flex items-start gap-3.5">
+                {/* Mascot Avatar Stage */}
+                <div
+                  onClick={handlePokeMascot}
+                  className="relative flex-shrink-0 cursor-pointer group flex flex-col items-center pt-0.5"
+                  title="Click to interact with your companion!"
+                >
+                  <div className="relative p-1.5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] group-hover:scale-105 group-hover:border-cyan-400 transition-all duration-300">
+                    <AnimeMascot
+                      character={companionChar}
+                      pose={mascotSpeech.pose}
+                      currentTheme={currentTheme}
+                      size={82}
+                    />
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-400" />
+                  </div>
+
+                  <motion.span
+                    className="mt-1.5 inline-flex items-center gap-1 text-[9px] font-tech font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-cyan-300 group-hover:border-cyan-400 group-hover:text-white transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <Radio className="w-2.5 h-2.5 text-cyan-400 animate-pulse" /> POKE ME
+                  </motion.span>
+                </div>
+
+                {/* High-Contrast Dialogue Bubble Box */}
+                <div className="flex-grow min-w-0">
+                  <div className="rounded-2xl bg-black/95 border border-cyan-500/40 p-3 shadow-inner">
+                    {/* Status Strip */}
+                    <div className="flex items-center justify-between gap-1.5 pb-1.5 mb-2 border-b border-slate-800">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Terminal className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+                        <span className="font-display font-bold text-[11px] tracking-wider text-cyan-300 uppercase truncate">
+                          {mascotSpeech.title}
+                        </span>
+                      </div>
+                      <span className="font-tech font-bold text-[9px] px-1.5 py-0.5 rounded border border-amber-400/40 bg-amber-400/10 text-amber-300 uppercase tracking-wider flex-shrink-0">
+                        {mascotSpeech.mood}
+                      </span>
+                    </div>
+
+                    {/* Dynamic High-Contrast Dialogue Text */}
+                    <div className="min-h-[46px] flex items-center">
+                      <AnimatePresence mode="wait">
+                        <motion.p
+                          key={mascotSpeech.message}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 6 }}
+                          transition={{ duration: 0.2 }}
+                          className="font-sans text-xs text-white leading-relaxed font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                        >
+                          "{mascotSpeech.message}"
+                        </motion.p>
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Transmission Chips */}
+              <div className="mt-3 pt-2.5 border-t border-slate-800 flex flex-wrap items-center gap-1.5">
+                <span className="font-tech text-[9px] uppercase font-bold text-slate-400 mr-1">
+                  TRANSMIT:
+                </span>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    triggerGameFX('cyberpunk', rect.left + rect.width / 2, rect.top + rect.height / 2);
+                    setIsCharacterCreatorOpen(true);
+                  }}
+                  className="px-2 py-0.5 rounded-lg bg-cyan-500/20 border border-cyan-400/80 text-cyan-300 hover:text-white text-[10px] font-tech font-bold tracking-wider flex items-center gap-1 transition-colors shadow-[0_0_8px_rgba(6,182,212,0.3)] cursor-pointer"
+                >
+                  <Zap className="w-2.5 h-2.5 text-cyan-400" />
+                  <span>Creator</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleSelectAttribute('intellect', e)}
+                  className="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-indigo-400 text-[10px] font-tech font-bold tracking-wider text-slate-200 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Brain className="w-2.5 h-2.5 text-indigo-400" />
+                  <span>Deep Work</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleSelectHouse('blossom', e)}
+                  className="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-pink-400 text-[10px] font-tech font-bold tracking-wider text-slate-200 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Heart className="w-2.5 h-2.5 text-pink-400" />
+                  <span>Blossom</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => handleSelectHouse('buttercup', e)}
+                  className="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-lime-400 text-[10px] font-tech font-bold tracking-wider text-slate-200 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Sword className="w-2.5 h-2.5 text-lime-400" />
+                  <span>Buttercup</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    const el = document.getElementById('journey');
+                    el?.scrollIntoView({ behavior: 'smooth' });
+                    setMascotSpeech({
+                      title: "PIXEL BUDDY // MAP SCOUT",
+                      message: "Here is your 3-Step Heroic Roadmap! Follow the glowing celestial route to level up your real life! 🗺️✨",
+                      mood: "EXPLORING",
+                      pose: "jump"
+                    });
+                  }}
+                  className="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-amber-400 text-[10px] font-tech font-bold tracking-wider text-slate-200 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Compass className="w-2.5 h-2.5 text-amber-400" />
+                  <span>3-Step Map</span>
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
     </div>
   );

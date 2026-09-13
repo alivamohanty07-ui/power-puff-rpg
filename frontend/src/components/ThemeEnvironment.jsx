@@ -365,8 +365,8 @@ function CyberpunkScenery() {
         <rect x="1540" y="420" width="40" height="18" fill="#eab308" opacity="0.8" stroke="#fef08a" strokeWidth="2" />
       </g>
 
-      {/* Giant Angled Holographic Billboards */}
-      <g>
+      {/* Giant Angled Holographic Billboards - Reduced opacity to 12% to prevent clutter behind hero headline */}
+      <g opacity="0.12">
         {/* Left Holographic Billboard */}
         <g transform="translate(180, 520) rotate(-6)">
           <rect x="0" y="0" width="220" height="110" rx="12" fill="#06b6d4" fillOpacity="0.12" stroke="#06b6d4" strokeWidth="3" />
